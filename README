@@ -1,0 +1,12 @@
+CartComponent
+
+This object is intended to represent a common shopping cart, and contain some of the most common shopping cart operations.
+Currently discounts are relatively simple. The Discount class will be evolving into more complex discount operations.
+Discounts can apply to either shipments or items, as flat or percentage, and be calculated before or after tax. 
+Items and Shipments can be taxable or discountable. There are boolean flags in both objects.
+Tax is configurable. It can be turned on or off, and the rate can be set.
+
+These objects are intended to be wrapped by a larger e-commerce system. These objects have the most common variables.
+For example, a cart can be broken down to just store product ID's, then stored as a string in the database.
+When a customer returns to your store, they may want to reload their previous shopping cart or wishlists.
+One of the main features of these objects is the ability to import and export json strings, and be easy to work with.

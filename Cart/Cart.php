@@ -47,6 +47,15 @@ class Cart
      */
     protected $_precision;
 
+    /**
+     * Flag whether to discount taxable total first or last,
+     *  only effective if pre-tax discounts "overlap" and reduce
+     *  the taxable sub-total
+     *
+     * @var boolean
+     */
+    protected $_discountTaxableLast;
+
     //define array keys
     
     static $items = 'items'; //used as a prefix also, to keep keys formatted as strings
@@ -62,10 +71,12 @@ class Cart
     static $taxRate = 'tax_rate';
 
     static $total = 'total';
+
+    static $discountTaxableLast = 'discount_taxable_last';
     
     static $separator = '-'; //keeping things configurable
     
-    public function __construct($precision = 2, $includeTax = false, $taxRate = 0)
+    public function __construct($precision = 2, $includeTax = false, $taxRate = 0, $discountTaxableLast = true)
     {
         $this->_items = array();
         $this->_discounts = array();
@@ -73,6 +84,7 @@ class Cart
         $this->_precision = $precision;
         $this->_includeTax = $includeTax;
         $this->_taxRate = $taxRate;
+        $this->_discountTaxableLast = $discountTaxableLast;
     }
 
     public function __toString()
@@ -122,6 +134,7 @@ class Cart
             self::$shipments  => $shipments,
             self::$taxRate    => $this->getTaxRate(),
             self::$includeTax => $this->getIncludeTax(),
+            self::$discountTaxableLast => $this->getDiscountTaxableLast(),
         );
     }
     
@@ -182,6 +195,11 @@ class Cart
             $taxRate = $cart[self::$taxRate];
             $this->setTaxRate($taxRate);
         }
+
+        if (isset($cart[self::$discountTaxableLast])) {
+            $discountTaxableLast = $cart[self::$discountTaxableLast];
+            $this->setDiscountTaxableLast($discountTaxableLast);
+        }
         
         return $this;
     }
@@ -212,7 +230,7 @@ class Cart
     /**
      * Get array key for product Id
      */
-    public function getProductKey($productId)
+    static function getProductKey($productId)
     {
         return self::$items . self::$separator . $productId;
     }
@@ -220,7 +238,7 @@ class Cart
     /**
      * Get array key for discount Id
      */
-    public function getDiscountKey($discountId)
+    static function getDiscountKey($discountId)
     {
         return self::$discounts . self::$separator . $discountId;
     }
@@ -228,7 +246,7 @@ class Cart
     /**
      * Get array key for shipping Id
      */
-    public function getShippingKey($shippingId)
+    static function getShippingKey($shippingId)
     {
         return self::$shipments . self::$separator . $shippingId;
     }
@@ -260,12 +278,7 @@ class Cart
      */
     public function getTotal()
     {
-        $total = 0;
-        $total += $this->currency($this->getItemTotal());
-        $total += $this->currency($this->getShipmentTotal());
-        $total -= $this->currency($this->getDiscountTotal());
-        $total += $this->currency($this->getTaxTotal());
-        return $this->currency($total);
+        return $this->currency($this->getItemTotal() + $this->getShipmentTotal() + $this->getTaxTotal() - $this->getDiscountTotal());
     }
 
     /**
@@ -314,14 +327,38 @@ class Cart
             return $this->currency(0);
         }
 
-        $discountedItemTotal = $this->getTaxableItemTotal() - $this->getPreTaxItemDiscount();
-        if ($discountedItemTotal <= 0) {
-            $discountedItemTotal = $this->currency(0);
-        }
+        $discountedItemTotal = 0;
+        $discountedShipmentTotal = 0;
 
-        $discountedShipmentTotal = $this->getTaxableShipmentTotal() - $this->getPreTaxShipmentDiscount();
-        if ($discountedShipmentTotal <= 0) {
-            $discountedShipmentTotal = $this->currency(0);
+        if ($this->getDiscountTaxableLast()) {
+            //overlap = taxable + discountable - itemTotal;
+            //taxable -= overlap;
+
+            if (($this->getTaxableItemTotal() + $this->getPreTaxItemDiscount()) > $this->getItemTotal()) {
+                $itemOverlapAmount = $this->currency($this->getTaxableItemTotal() + $this->getPreTaxItemDiscount() - $this->getItemTotal());
+                $discountedItemTotal = $this->currency($this->getTaxableItemTotal() - $itemOverlapAmount);
+            } else {
+                $discountedItemTotal = $this->getTaxableItemTotal();
+            }
+
+            if (($this->getTaxableShipmentTotal() + $this->getPreTaxShipmentDiscount()) > $this->getShipmentTotal()) {
+                $shipmentOverlapAmount = $this->currency($this->getTaxableShipmentTotal() + $this->getPreTaxShipmentDiscount() - $this->getShipmentTotal());
+                $discountedShipmentTotal = $this->currency($this->getTaxableShipmentTotal() - $shipmentOverlapAmount);
+            } else {
+                $discountedShipmentTotal = $this->getTaxableShipmentTotal();
+            }
+
+        } else {
+
+            $discountedItemTotal = $this->getTaxableItemTotal() - $this->getPreTaxItemDiscount();
+            if ($discountedItemTotal <= 0) {
+                $discountedItemTotal = $this->currency(0);
+            }
+
+            $discountedShipmentTotal = $this->getTaxableShipmentTotal() - $this->getPreTaxShipmentDiscount();
+            if ($discountedShipmentTotal <= 0) {
+                $discountedShipmentTotal = $this->currency(0);
+            }
         }
 
         $taxableTotal = $this->currency($discountedItemTotal + $discountedShipmentTotal);
@@ -374,7 +411,7 @@ class Cart
             return false;
         }
 
-        $key = $this->getProductKey($productId);
+        $key = self::getProductKey($productId);
         $this->_items[$key] = $item;
         return $this;
     }
@@ -385,7 +422,7 @@ class Cart
      */
     public function removeItem($productId)
     {
-        $key = $this->getProductKey($productId);
+        $key = self::getProductKey($productId);
         if (isset($this->_items[$key])) {
             unset($this->_items[$key]);
         }
@@ -403,7 +440,7 @@ class Cart
             return false;
         }
 
-        $key = $this->getDiscountKey($discountId);
+        $key = self::getDiscountKey($discountId);
         $this->_discounts[$key] = $discount;
         return $this;
     }
@@ -414,7 +451,7 @@ class Cart
      */
     public function removeDiscount($discountId)
     {
-        $key = $this->getDiscountKey($discountId);
+        $key = self::getDiscountKey($discountId);
         if (isset($this->_discounts[$key])) {
             unset($this->_discounts[$key]);
         }
@@ -432,7 +469,7 @@ class Cart
             return false;
         }
 
-        $key = $this->getShippingKey($shipmentId);
+        $key = self::getShippingKey($shipmentId);
         $this->_shipments[$key] = $shipment;
         return $this;
     }
@@ -499,7 +536,7 @@ class Cart
         if (count($this->getPostTaxDiscounts()) > 0) {
             foreach($this->getPostTaxDiscounts() as $discountKey => $discount) {
 
-                $value = $this->currency($discount->getValue());
+                $value = $this->currency($discount->getValue()); // either flat or percentage
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
                 if ($discount->getTo() != Discount::$toShipping) {
@@ -531,7 +568,7 @@ class Cart
         if (count($this->getPreTaxDiscounts()) > 0) {
             foreach($this->getPreTaxDiscounts() as $discountKey => $discount) {
 
-                $value = $this->currency($discount->getValue());
+                $value = $this->currency($discount->getValue()); // either flat or percentage
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
                 if ($discount->getTo() != Discount::$toProducts) {
@@ -730,6 +767,23 @@ class Cart
     public function setIncludeTax($includeTax)
     {
         $this->_includeTax = $includeTax;
+        return $this;
+    }
+
+    /**
+     * Accessor
+     */
+    public function getDiscountTaxableLast()
+    {
+        return $this->_discountTaxableLast;
+    }
+
+    /**
+     * Mutator
+     */
+    public function setDiscountTaxableLast($discountTaxableLast)
+    {
+        $this->_discountTaxableLast = $discountTaxableLast;
         return $this;
     }
 

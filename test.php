@@ -44,3 +44,9 @@ $cartC->importJson($cartB->toJson());
 echo "\n{$cartC}\n";
 echo print_r($cartC->getTotals(), 1);
 
+$cartC->setDiscountTaxableLast(false);
+echo "\n{$cartC}\n";
+echo print_r($cartC->getTotals(), 1);
+
+
+

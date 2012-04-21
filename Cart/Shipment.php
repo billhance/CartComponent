@@ -121,6 +121,7 @@ class Shipment
 			self::$weight          => $this->getWeight(),
 			self::$method          => $this->getMethod(),
 			self::$vendor          => $this->getVendor(),
+			self::$items    	   => $this->getItems(),
 		);
 	}
 
@@ -169,7 +170,7 @@ class Shipment
 		$this->_method = '';
 		$this->_vendor = '';
 		$this->_items = array();
-		
+
 		return $this;
 	}
 
@@ -315,9 +316,14 @@ class Shipment
 	 */
 	public function removeItem($key)
 	{
+		if ($key instanceof Item) {
+			$key = Item::getKey($key->getId());
+		}
+
 		if (isset($this->_items[$key])) {
 			unset($this->_items[$key]);
 		}
+
 		return $this;
 	}
 
@@ -329,6 +335,10 @@ class Shipment
 	 */
 	public function hasItem($key)
 	{
+		if ($key instanceof Item) {
+			$key = Item::getKey($key->getId());
+		}
+
 		return isset($this->_items[$key]);
 	}
 

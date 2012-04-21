@@ -10,10 +10,12 @@ $itemB = new Item(4312, '99.99');
 
 $shipmentA = new Shipment(3, '11.99');
 $shipmentA->setIsDiscountable(false)
-	      ->setIsTaxable(true);
+	      ->setIsTaxable(true)
+	      ->addItem($itemA);
 
 $shipmentB = new Shipment(4, '10.00');
-$shipmentB->setIsTaxable(false);
+$shipmentB->setIsTaxable(false)
+		  ->addItem($itemB);
 
 $discountA = new Discount(2, '10.00');
 

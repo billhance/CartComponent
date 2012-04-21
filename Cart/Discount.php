@@ -14,7 +14,7 @@ class Discount
 	/**
 	 * @var string|int
 	 */
-	protected $_discountId; // YOUR Id
+	protected $_id; // YOUR Discount Id
 
 	/**
 	 * @var string
@@ -29,17 +29,17 @@ class Discount
 	/**
 	 * @var string
 	 */
-	protected $_to; // products|shipping
+	protected $_to; // products|shipping|specified
 
 	/**
-	 * @var array of Item
+	 * @var array of Item, key => quantity
 	 */
 	protected $_items;
 
 	/**
-	 * @var string
+	 * @var array of Shipment, key => key
 	 */
-	//protected $_toKey; // all|productKey|shipmentKey // possible option to apply to a single item, or all items
+	protected $_shipments;
 
 	/**
 	 * @var bool
@@ -48,7 +48,7 @@ class Discount
 
 	// vars for array representation
 
-	static $discountId = 'discount_id'; // array key
+	static $id = 'id'; // array key
 
 	static $value = 'value'; // array key
 
@@ -60,20 +60,33 @@ class Discount
 
     static $to = 'to'; // array key
 
-    static $toShipping = 'shipping'; // array key value
+    static $toSpecified = 'specified'; // array key value
 
-    static $toProducts = 'products'; // array key value
+    static $toShipments = 'shipments'; // array key value
 
-    static $isPreTax = 'is_pre_tax';
+    static $toItems = 'items'; // array key value
 
-	public function __construct($discountId = 0, $value = 0, $as = 'flat', $to = 'products', $isPreTax = true)
+    static $isPreTax = 'is_pre_tax'; // array key
+
+    static $prefix = 'discount-'; // array key prefix
+
+	public function __construct($id = 0, $value = 0, $as = 'flat', $to = 'items', $isPreTax = true, $items = array(), $shipments = array())
 	{
-		$this->_discountId = $discountId;
+		$this->_id = $id;
 		$this->_as = $as;
 		$this->_value = $value;
 		$this->_to = $to;
 		$this->_isPreTax = $isPreTax;
-		$this->_items = array();
+		$this->_items = $items;
+		$this->_shipments = $shipments;
+	}
+
+	/**
+	 * Get key for associative arrays
+	 */
+	static function getKey($id)
+	{
+		return self::$prefix . $id;
 	}
 
 	/**
@@ -101,12 +114,13 @@ class Discount
 	public function toArray()
 	{
 		return array(
-			self::$discountId => $this->getDiscountId(),
-			self::$value      => $this->getValue(),
-			self::$as         => $this->getAs(),
-			self::$to         => $this->getTo(),
-			self::$isPreTax   => $this->getIsPreTax(),
-			//self::$items // complex discounts are just starting to get interesting
+			self::$id   		=> $this->getId(),
+			self::$value        => $this->getValue(),
+			self::$as           => $this->getAs(),
+			self::$to           => $this->getTo(),
+			self::$isPreTax     => $this->getIsPreTax(),
+			self::$toItems      => $this->getItems(),
+			self::$toShipments  => $this->getShipments(),
 		);
 	}
 
@@ -121,18 +135,29 @@ class Discount
 			$this->reset();
 		}
 
-		$discountId = isset($data[self::$discountId]) ? $data[self::$discountId] : '';
+		$id = isset($data[self::$id]) ? $data[self::$id] : '';
+
 		$as = isset($data[self::$as]) ? $data[self::$as] : '';
+		$as = ($as == self::$asFlat) ? self::$asFlat : self::$asPercent;
+
 		$to = isset($data[self::$to]) ? $data[self::$to] : '';
+		if (!in_array($to, array(self::$toSpecified, self::$toItems, self::$toShipments))) {
+			$to = self::$toItems;
+		}
+
 		$value = isset($data[self::$value]) ? $data[self::$value] : 0;
 		$isPreTax = isset($data[self::$isPreTax]) ? $data[self::$isPreTax] : false;
 
-		$this->_discountId = $discountId;
+		$toItems = isset($data[self::$toItems]) ? $data[self::$toItems] : array();
+		$toShipments = isset($data[self::$toShipments]) ? $data[self::$toShipments] : array();
+
+		$this->_id = $id;
 		$this->_as = $as;
 		$this->_to = $to;
 		$this->_value = $value;
 		$this->_isPreTax = $isPreTax;
-		//$this->_items // will have complex discounts
+		$this->_items = $toItems;
+		$this->_shipments = $toShipments;
 
 		return $this;
 	}
@@ -142,28 +167,31 @@ class Discount
 	 */
 	public function reset()
 	{
-		$this->_value = 0;
+		$this->_id = 0;
 		$this->_as = self::$asFlat;
-		$this->_to = self::$toProducts;
+		$this->_to = self::$toItems;
+		$this->_value = 0;
 		$this->_isPreTax = false;
 		$this->_items = array();
+		$this->_shipments = array();
+
 		return $this;
 	}
 
 	/**
 	 * Accessor
 	 */
-	public function getDiscountId()
+	public function getId()
 	{
-		return $this->_discountId;
+		return $this->_id;
 	}
 
 	/**
 	 * Mutator
 	 */
-	public function setDiscountId($discountId)
+	public function setId($id)
 	{
-		$this->_discountId = $discountId;
+		$this->_id = $id;
 		return $this;
 	}
 
@@ -235,6 +263,10 @@ class Discount
 		return $this;
 	}
 
+	// DEV NOTE:
+	// Items and Shipments are only for specified discounts
+	// set $this->_to = self::$toSpecified
+
 	/**
 	 * Accessor
 	 */
@@ -244,23 +276,86 @@ class Discount
 	}
 
 	/**
-	 * Add an item to this shipment
+	 * Add an Item to this Discount
 	 */
-	public function addItem($productKey, Item $item)
+	public function addItem(Item $item, $qty = 1)
 	{
-		$this->_items[$productKey] = $item;
+		$key = Item::getKey($item->getId());
+		$this->_items[$key] = $qty;
 		return $this;
 	}
 
 	/**
-	 * Remove an item from this shipment
+	 * Remove an Item from this Discount
 	 */
-	public function removeItem($productKey)
+	public function removeItem($key)
 	{
-		if (isset($this->_items[$productKey])) {
-			unset($this->_items[$productKey]);
+		if (isset($this->_items[$key])) {
+			unset($this->_items[$key]);
 		}
 		return $this;
+	}
+
+	/**
+	 * Assert item exists
+	 *
+	 * @param string itemKey
+	 * @return boolean hasItem
+	 */
+	public function hasItem($key)
+	{
+		return isset($this->_items[$key]);
+	}
+
+	/**
+	 * Set quantity to item
+	 */
+	public function setItemQty($key, $qty)
+	{
+		if (isset($this->_items[$key])) {
+			$this->_items[$key] = $qty;
+		}
+		return $this;
+	}
+
+	/**
+	 * Accessor
+	 */
+	public function getShipments()
+	{
+		return $this->_shipments;
+	}
+
+	/**
+	 * Add a Shipment to this Discount
+	 */
+	public function addShipment(Shipment $shipment)
+	{
+		$key = Shipment::getKey($shipment->getId());
+		$this->_shipments[$key] = $key;
+		return $this;
+	}
+
+	/**
+	 * Remove an Item from this Discount
+	 */
+	public function removeShipment($key)
+	{
+		if (isset($this->_shipments[$key])) {
+			unset($this->_shipments[$key]);
+		}
+		return $this;
+	}
+
+	/**
+	 * Assert shipment exists
+	 *
+	 * @param string itemKey
+	 * @return boolean hasItem
+	 */
+	public function hasShipment($key)
+	{
+		return isset($this->_shipments[$key]);
 	}
 
 }

@@ -33,11 +33,6 @@ class Cart
     protected $_includeTax; // enable/disable per state
 
     /**
-     * @var string country
-     */
-    protected $_country;
-
-    /**
      * Tax rate eg 0.08
      */
     protected $_taxRate;
@@ -73,8 +68,6 @@ class Cart
     static $total = 'total';
 
     static $discountTaxableLast = 'discount_taxable_last';
-    
-    static $separator = '-'; //keeping things configurable
     
     public function __construct($precision = 2, $includeTax = false, $taxRate = 0, $discountTaxableLast = true)
     {
@@ -216,6 +209,8 @@ class Cart
         $this->_includeTax = false;
         $this->_taxRate = 0.0;
         $this->_precision = 2;
+        $this->_discountTaxableLast = true;
+
         return $this;
     }
 
@@ -226,29 +221,22 @@ class Cart
     {
         return number_format($value, $this->_precision);
     }
-    
+
     /**
-     * Get array key for product Id
+     * Set decimal point precision
      */
-    static function getProductKey($productId)
+    public function setPrecision($precision)
     {
-        return self::$items . self::$separator . $productId;
+        $this->_precision = (int) $precision;
+        return $this;
     }
-    
+
     /**
-     * Get array key for discount Id
+     * Get decimal point precision
      */
-    static function getDiscountKey($discountId)
+    public function getPrecision()
     {
-        return self::$discounts . self::$separator . $discountId;
-    }
-    
-    /**
-     * Get array key for shipping Id
-     */
-    static function getShippingKey($shippingId)
-    {
-        return self::$shipments . self::$separator . $shippingId;
+        return $this->_precision;
     }
 
     /**
@@ -278,7 +266,10 @@ class Cart
      */
     public function getTotal()
     {
-        return $this->currency($this->getItemTotal() + $this->getShipmentTotal() + $this->getTaxTotal() - $this->getDiscountTotal());
+        return $this->currency($this->getItemTotal() + 
+                                $this->getShipmentTotal() + 
+                                $this->getTaxTotal() - 
+                                $this->getDiscountTotal());
     }
 
     /**
@@ -385,11 +376,133 @@ class Cart
     }
 
     /**
+     * Retrieve Item
+     */
+    public function getItem($key)
+    {
+        return isset($this->_items[$key]) ? $this->_items[$key] : false;
+    }
+
+    /**
+     * Set Item to Cart 
+     *
+     */
+    public function addItem(Item $item)
+    {
+        $key = Item::getKey($item->getId());
+        $this->_items[$key] = $item;
+        return $this;
+    }
+
+    /**
+     * Remove item from array
+     *
+     */
+    public function removeItem($key)
+    {
+        if ($key instanceof Item) {
+            $key = Item::getKey($key->getId());
+        }
+
+        if (isset($this->_items[$key])) {
+            unset($this->_items[$key]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Assert Item exists
+     *
+     * @param string itemKey
+     * @return boolean hasItem
+     */
+    public function hasItem($key)
+    {
+        return isset($this->_items[$key]);
+    }
+
+    /**
+     * Get keys of shipments that have been specified in discounts
+     * This helps with separating specific discounts, so specified items
+     * are not discounted by non-specific discounts
+     *
+     * @return array
+     */
+    public function getSpecifiedDiscountItemKeys()
+    {
+        $keys = array();
+        if (count($this->getDiscounts()) > 0) {
+            foreach($this->getDiscounts() as $key => $discount) {
+
+                if ($discount->getTo() != Discount::$toSpecified) {
+                    continue;
+                }
+
+                $shipments = $discount->getItems();
+                if (count($discount->getItems()) > 0) {
+                    foreach($discount->getItems() as $itemKey => $qty) {
+                        $keys[$itemKey] = $itemKey;
+                    }
+                }
+            }
+        }
+        return $keys;
+    }
+
+    /**
      * Accessor
      */
     public function getDiscounts()
     {
         return $this->_discounts;
+    }
+
+    /**
+     * Retrieve Discount
+     */
+    public function getDiscount($key)
+    {
+        return isset($this->_discounts[$key]) ? $this->_discounts[$key] : false;
+    }
+
+    /**
+     * Add Discount to cart
+     *
+     */
+    public function addDiscount(Discount $discount)
+    {
+        $key = Discount::getKey($discount->getId());
+        $this->_discounts[$key] = $discount;
+        return $this;
+    }
+    
+    /**
+     * Remove Discount from cart
+     *
+     */
+    public function removeDiscount($key)
+    {
+        if ($key instanceof Discount) {
+            $key = Discount::getKey($key->getId());
+        }
+
+        if (isset($this->_discounts[$key])) {
+            unset($this->_discounts[$key]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Assert Discount exists
+     *
+     * @param string discountKey
+     * @return boolean hasDiscount
+     */
+    public function hasDiscount($key)
+    {
+        return isset($this->_discounts[$key]);
     }
 
     /**
@@ -399,63 +512,13 @@ class Cart
     {
         return $this->_shipments;
     }
-    
-    /**
-     * Set Item to Cart 
-     *
-     */
-    public function addItem(Item $item)
-    {
-        $productId = (int) $item->getProductId();
-        if (!$productId) {
-            return false;
-        }
-
-        $key = self::getProductKey($productId);
-        $this->_items[$key] = $item;
-        return $this;
-    }
 
     /**
-     * Remove productId from array
-     *
+     * Retrieve Shipment
      */
-    public function removeItem($productId)
+    public function getShipment($key)
     {
-        $key = self::getProductKey($productId);
-        if (isset($this->_items[$key])) {
-            unset($this->_items[$key]);
-        }
-        return $this;
-    }
-
-    /**
-     * Add Discount to cart
-     *
-     */
-    public function addDiscount(Discount $discount)
-    {
-        $discountId = $discount->getDiscountId();
-        if (!$discountId) {
-            return false;
-        }
-
-        $key = self::getDiscountKey($discountId);
-        $this->_discounts[$key] = $discount;
-        return $this;
-    }
-    
-    /**
-     * Remove Discount from cart
-     *
-     */
-    public function removeDiscount($discountId)
-    {
-        $key = self::getDiscountKey($discountId);
-        if (isset($this->_discounts[$key])) {
-            unset($this->_discounts[$key]);
-        }
-        return $this;
+        return isset($this->_shipments[$key]) ? $this->_shipments[$key] : false;
     }
 
     /**
@@ -464,12 +527,7 @@ class Cart
      */
     public function addShipment(Shipment $shipment)
     {
-        $shipmentId = $shipment->getShipmentId();
-        if (!$shipmentId) {
-            return false;
-        }
-
-        $key = self::getShippingKey($shipmentId);
+        $key = Shipment::getKey($shipment->getId());
         $this->_shipments[$key] = $shipment;
         return $this;
     }
@@ -478,21 +536,111 @@ class Cart
      * Remove Shipment from cart
      *
      */
-    public function removeShipment($shipmentId)
+    public function removeShipment($key)
     {
-        $key = $this->getShipmentKey($shipmentId);
+        if ($key instanceof Shipment) {
+            $key = Shipment::getKey($key->getId());
+        }
+
         if (isset($this->_shipments[$key])) {
             unset($this->_shipments[$key]);
         }
+
         return $this;
     }
 
     /**
-     * Get Total Item/Shipment Discount Before Tax
+     * Assert Shipment exists
+     *
+     * @param string shipmentKey
+     * @return boolean hasShipment
+     */
+    public function hasShipment($key)
+    {
+        return isset($this->_shipments[$key]);
+    }
+
+    /**
+     * Get keys of shipments that have been specified in discounts
+     * This helps with separating specific discounts, so specified items
+     * are not discounted by non-specific discounts
+     *
+     * @return array
+     */
+    public function getSpecifiedDiscountShipmentKeys()
+    {
+        $keys = array();
+        if (count($this->getDiscounts()) > 0) {
+            foreach($this->getDiscounts() as $key => $discount) {
+                if ($discount->getTo() != Discount::$toSpecified) {
+                    continue;
+                }
+
+                $shipments = $discount->getShipments();
+                if (count($discount->getShipments()) > 0) {
+                    foreach($discount->getShipments() as $shipmentKey => $value) {
+                        $keys[$shipmentKey] = $shipmentKey;
+                    }
+                }
+            }
+        }
+        return $keys;
+    }
+
+    /**
+     * Get Total Item/Shipment/Specified Discount Before Tax
      */
     public function getPreTaxDiscount()
     {
-        return $this->currency($this->getPreTaxShipmentDiscount() + $this->getPreTaxItemDiscount());
+        return $this->currency($this->getPreTaxShipmentDiscount() + 
+                               $this->getPreTaxItemDiscount() +
+                               $this->getPreTaxSpecifiedDiscount());
+    }
+
+    /**
+     * Get Total Specified Item/Shipment Discount before Tax
+     */
+    public function getPreTaxSpecifiedDiscount()
+    {
+        $total = $this->currency(0);
+        if (count($this->getPreTaxDiscounts()) > 0) {
+            foreach($this->getPreTaxDiscounts() as $key => $discount) {
+
+                if ($discount->getTo() != Discount::$toSpecified) {
+                    continue;
+                }
+
+                $specifiedTotal = 0;
+
+                $discountItems = $discount->getItems();
+                if (count($discountItems) > 0) {
+                    foreach($discountItems as $key => $qty) {
+                        $item = $this->getItem($key);
+                        $price = $item->getPrice();
+                        $specifiedTotal += $this->currency($price * $qty);
+                    }
+                }
+
+                $discountShipments = $discount->getShipments();
+                if (count($discountShipments) > 0) {
+                    foreach($discountShipments as $key => $value) {
+                        //value and key are same
+                        $shipment = $this->getShipment($key);
+                        $price = $shipment->getPrice();
+                        $specifiedTotal += $this->currency($price);
+                    }
+                }
+
+                //calculate discount
+                if ($discount->getAs() == Discount::$asFlat) {
+                    $total += $this->currency($discount->getValue());    
+                } else if ($discount->getAs() == Discount::$asPercent) {
+                    $total += $this->currency($discount->getValue() * $specifiedTotal);
+                }
+
+            }
+        }
+        return $this->currency($total);
     }
 
     /**
@@ -507,21 +655,25 @@ class Cart
                 $value = $this->currency($discount->getValue());
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
-                if ($discount->getTo() != Discount::$toShipping) {
+                if ($discount->getTo() != Discount::$toShipments) {
                     continue;
                 }
 
+                // need to get total of un-specified , and discountable
+
                 if ($as == Discount::$asPercent) {
-                    $total += $this->currency($value * $this->getDiscountableShipmentTotal()); // only discountable shipments
+                    $total += $this->currency($value * $this->getDiscountableShipmentTotal(true)); // only discountable shipments
                 } else {
                     $total += $value;
                 }
             }
         }
 
+        // need to get total of un-specified , and discountable
+
         // cannot be more than is discountable
-        if ($total > $this->getDiscountableShipmentTotal()) {
-            $total = $this->getDiscountableShipmentTotal();
+        if ($total > $this->getDiscountableShipmentTotal(true)) {
+            $total = $this->getDiscountableShipmentTotal(true);
         }
 
         return $this->currency($total);
@@ -539,12 +691,12 @@ class Cart
                 $value = $this->currency($discount->getValue()); // either flat or percentage
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
-                if ($discount->getTo() != Discount::$toShipping) {
+                if ($discount->getTo() != Discount::$toShipments) {
                     continue;
                 }
 
                 if ($as == Discount::$asPercent) {
-                    $total += $this->currency($value * $this->getDiscountableShipmentTotal()); // only discountable shipments
+                    $total += $this->currency($value * $this->getDiscountableShipmentTotal(true)); // only discountable shipments
                 } else {
                     $total += $value;
                 }
@@ -552,8 +704,8 @@ class Cart
         }
 
         // cannot be more than is discountable
-        if ($total > $this->getDiscountableShipmentTotal()) {
-            $total = $this->getDiscountableShipmentTotal();
+        if ($total > $this->getDiscountableShipmentTotal(true)) {
+            $total = $this->getDiscountableShipmentTotal(true);
         }
 
         return $this->currency($total);
@@ -571,12 +723,12 @@ class Cart
                 $value = $this->currency($discount->getValue()); // either flat or percentage
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
-                if ($discount->getTo() != Discount::$toProducts) {
+                if ($discount->getTo() != Discount::$toItems) {
                     continue;
                 }
 
                 if ($as == Discount::$asPercent) {
-                    $total += $this->currency($value * $this->getDiscountableItemTotal()); // only discountable items
+                    $total += $this->currency($value * $this->getDiscountableItemTotal(true)); // only discountable items
                 } else {
                     $total += $value;
                 }
@@ -584,8 +736,8 @@ class Cart
         }
 
         // cannot be more than is discountable
-        if ($total > $this->getDiscountableItemTotal()) {
-            $total = $this->getDiscountableItemTotal();
+        if ($total > $this->getDiscountableItemTotal(true)) {
+            $total = $this->getDiscountableItemTotal(true);
         }
 
         return $this->currency($total);
@@ -603,12 +755,12 @@ class Cart
                 $value = $this->currency($discount->getValue());
                 $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
 
-                if ($discount->getTo() != Discount::$toProducts) {
+                if ($discount->getTo() != Discount::$toItems) {
                     continue;
                 }
 
                 if ($as == Discount::$asPercent) {
-                    $total += $this->currency($value * $this->getDiscountableItemTotal()); // only discountable items
+                    $total += $this->currency($value * $this->getDiscountableItemTotal(true)); // only discountable items
                 } else {
                     $total += $value;
                 }
@@ -616,8 +768,54 @@ class Cart
         }
 
         // cannot be more than is discountable
-        if ($total > $this->getDiscountableItemTotal()) {
-            $total = $this->getDiscountableItemTotal();
+        if ($total > $this->getDiscountableItemTotal(true)) {
+            $total = $this->getDiscountableItemTotal(true);
+        }
+        return $this->currency($total);
+    }
+
+    /**
+     * Get Total Specified Item/Shipment Discount after Tax
+     */
+    public function getPostTaxSpecifiedDiscount()
+    {
+        $total = $this->currency(0);
+        if (count($this->getPostTaxDiscounts()) > 0) {
+            foreach($this->getPostTaxDiscounts() as $key => $discount) {
+
+                if ($discount->getTo() != Discount::$toSpecified) {
+                    continue;
+                }
+
+                $specifiedTotal = 0;
+
+                $discountItems = $discount->getItems();
+                if (count($discountItems) > 0) {
+                    foreach($discountItems as $key => $qty) {
+                        $item = $this->getItem($key);
+                        $price = $item->getPrice();
+                        $specifiedTotal += $this->currency($price * $qty);
+                    }
+                }
+
+                $discountShipments = $discount->getShipments();
+                if (count($discountShipments) > 0) {
+                    foreach($discountShipments as $key => $value) {
+                        //value and key are same
+                        $shipment = $this->getShipment($key);
+                        $price = $shipment->getPrice();
+                        $specifiedTotal += $this->currency($price);
+                    }
+                }
+
+                //calculate discount
+                if ($discount->getAs() == Discount::$asFlat) {
+                    $total += $this->currency($discount->getValue());    
+                } else if ($discount->getAs() == Discount::$asPercent) {
+                    $total += $this->currency($discount->getValue() * $specifiedTotal);
+                }
+
+            }
         }
         return $this->currency($total);
     }
@@ -628,14 +826,17 @@ class Cart
     public function getPreTaxDiscounts()
     {
         $discounts = array();
+
         if (!count($this->getDiscounts())) {
             return $discounts;
         }
+
         foreach($this->getDiscounts() as $discountKey => $discount) {
             if ($discount->getIsPreTax()) {
                 $discounts[$discountKey] = $discount;
             }
         }
+
         return $discounts;
     }
 
@@ -661,7 +862,9 @@ class Cart
      */
     public function getPostTaxDiscount()
     {
-        return $this->currency($this->getPostTaxItemDiscount() + $this->getPostTaxShipmentDiscount());
+        return $this->currency($this->getPostTaxItemDiscount() + 
+                               $this->getPostTaxShipmentDiscount() +
+                               $this->getPostTaxSpecifiedDiscount());
     }
 
     /**
@@ -683,12 +886,16 @@ class Cart
     /**
      * Get discountable shipment total
      */
-    public function getDiscountableShipmentTotal()
+    public function getDiscountableShipmentTotal($unspecifiedOnly = false)
     {
         $total = 0;
+        $specifiedShipmentKeys = $this->getSpecifiedDiscountShipmentKeys();
         if (count($this->getShipments()) > 0) {
             foreach($this->getShipments() as $shipmentKey => $shipment) {
                 if ($shipment->getIsDiscountable()) {
+                    if ($unspecifiedOnly && isset($specifiedShipmentKeys[$shipmentKey])) {
+                        continue;
+                    }
                     $total += $this->currency($shipment->getPrice());
                 }
             }
@@ -723,10 +930,11 @@ class Cart
     /**
      * Get discountable item total
      */
-    public function getDiscountableItemTotal()
+    public function getDiscountableItemTotal($unspecifiedOnly = false)
     {
         $total = 0;
         if (count($this->getItems()) > 0) {
+            $specifiedItemKeys = $this->getSpecifiedDiscountItemKeys();
             foreach($this->getItems() as $productKey => $item) {
                 if ($item->getIsDiscountable()) {
                     $total += $this->currency($item->getPrice());

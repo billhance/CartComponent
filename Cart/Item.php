@@ -13,7 +13,7 @@ class Item
     /**
      * @var string|int
      */
-    protected $_productId; // YOUR product Id
+    protected $_id; // YOUR product Id
 
     /**
      * @var float
@@ -47,7 +47,7 @@ class Item
     
     //array keys for import/export
 
-    static $productId = 'product_id';
+    static $id = 'id';
 
     static $price = 'price';
     
@@ -59,16 +59,24 @@ class Item
 
     static $isDiscountable = 'is_discountable';
     
-    static $separator = '-';
+    static $prefix = 'item-';
     
-    public function __construct($productId = 0, $price = '', $qty = 1, $isTaxable = false, $isDiscountable = true, $custom = array()) 
+    public function __construct($id = 0, $price = '', $qty = 1, $isTaxable = false, $isDiscountable = true, $custom = array()) 
     {
-        $this->_productId = $productId;
+        $this->_id = $id;
         $this->_price = $price;
         $this->_qty = $qty;
         $this->_isTaxable = $isTaxable;
         $this->_isDiscountable = $isDiscountable;
         $this->_custom = $custom;
+    }
+
+    /**
+     * Get key for associative arrays
+     */
+    static function getKey($itemId)
+    {
+        return self::$prefix . $itemId;
     }
     
     public function __toString()
@@ -94,7 +102,7 @@ class Item
     public function toArray()
     {
         $data = array(
-            self::$productId      => $this->getProductId(),
+            self::$id             => $this->getId(),
             self::$price          => $this->getPrice(),
             self::$qty            => $this->getQty(),
             self::$custom         => $this->getCustom(),
@@ -118,18 +126,18 @@ class Item
 
         //automatically resets object
         $data = @ (array) json_decode($json);
-        if (!isset($data[self::$productId]) || !isset($data[self::$qty])) {
+        if (!isset($data[self::$id]) || !isset($data[self::$qty])) {
             return false;
         }
 
-        $productId = isset($data[self::$productId]) ? $data[self::$productId] : '';
+        $id = isset($data[self::$id]) ? $data[self::$id] : '';
         $price = isset($data[self::$price]) ? $data[self::$price] : 0;
         $qty = isset($data[self::$qty]) ? $data[self::$qty] : 0;
         $custom = isset($data[self::$custom]) ? $data[self::$custom] : array();
         $isTaxable = isset($data[self::$isTaxable]) ? $data[self::$isTaxable] : false;
         $isDiscountable = isset($data[self::$isDiscountable]) ? $data[self::$isDiscountable] : true;
         
-        $this->_productId = $productId;
+        $this->_id = $id;
         $this->_price = $price;
         $this->_qty = $qty;
         $this->_custom = $custom;
@@ -146,7 +154,7 @@ class Item
      */
     public function reset()
     {
-        $this->_productId = 0;
+        $this->_id = 0;
         $this->_price = 0;
         $this->_qty = 0;
         $this->_custom = array();
@@ -156,24 +164,24 @@ class Item
     }
     
     /**
-     * Accessor for productId
+     * Accessor for id
      *
      * @return int
      */
-    public function getProductId()
+    public function getId()
     {
-        return $this->_productId;
+        return $this->_id;
     }
 
     /**
      * Set product id
      *
-     * @param int $productId
+     * @param int $id
      * @return $this
      */
-    public function setProductId($productId)
+    public function setId($id)
     {
-        $this->_productId = $productId;
+        $this->_id = $id;
         return $this;
     }
 
@@ -287,6 +295,11 @@ class Item
             unset($this->_custom[$key]);
         }
         return $this;
+    }
+
+    public function hasCustom($key)
+    {
+        return isset($this->_custom[$key]);
     }
     
 }

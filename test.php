@@ -16,37 +16,41 @@ $shipmentB = new Shipment(4, '10.00');
 $shipmentB->setIsTaxable(false);
 
 $discountA = new Discount(2, '10.00');
+
 $discountB = new Discount(3, '0.75');
 $discountB->setAs(Discount::$asPercent)
-		  ->setTo(Discount::$toShipping);
+		  ->setTo(Discount::$toShipments);
 
-$cartA = new Cart();
-$totalsA = $cartA->getTotals();
+$discountC = new Discount(4, '0.50');
+$discountC->setAs(Discount::$asPercent)
+		  ->setTo(Discount::$toSpecified)
+		  ->addItem($itemA)
+		  ->addItem($itemB);
 
-$cartB = new Cart();
-$cartB->addItem($itemA);
-$cartB->addItem($itemB);
+$cart = new Cart();
+$cart->addItem($itemA);
+$cart->addItem($itemB);
+$cart->addDiscount($discountA);
+$cart->addShipment($shipmentA);
+$cart->addDiscount($discountB);
+$cart->addShipment($shipmentB);
+$cart->addDiscount($discountC);
 
-$cartB->addDiscount($discountA);
-$cartB->addShipment($shipmentA);
-$cartB->addDiscount($discountB);
-$cartB->addShipment($shipmentB);
+$cart->setIncludeTax(true)
+     ->setTaxRate('0.08');
 
-$cartB->setIncludeTax(true)
-      ->setTaxRate('0.08');
+echo "\n{$cart}\n";
+echo print_r($cart->getTotals(), 1);
 
-echo "\n{$cartB}\n";
-echo print_r($cartB->getTotals(), 1);
+$cart2 = new Cart();
+$cart2->importJson($cart->toJson());
 
-$cartC = new Cart();
-$cartC->importJson($cartB->toJson());
+echo "\n{$cart2}\n";
+echo print_r($cart2->getTotals(), 1);
 
-echo "\n{$cartC}\n";
-echo print_r($cartC->getTotals(), 1);
-
-$cartC->setDiscountTaxableLast(false);
-echo "\n{$cartC}\n";
-echo print_r($cartC->getTotals(), 1);
-
-
+$cart2->setDiscountTaxableLast(false);
+$cart2->setPrecision(3);
+$cart2->removeDiscount($discountC);
+echo "\n{$cart2}\n";
+echo print_r($cart2->getTotals(), 1);
 

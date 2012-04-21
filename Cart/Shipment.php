@@ -15,7 +15,7 @@ class Shipment
 	/**
 	 * @var string|int
 	 */
-	protected $_shipmentId;
+	protected $_id;
 
 	/**
 	 * @var bool
@@ -54,23 +54,27 @@ class Shipment
 
 	// array keys for import/export
 
-	static $shipmentId = 'shipment_id';
+	static $id = 'id'; // array key
 
-	static $price = 'price';
+	static $items = 'items'; // array key
 
-	static $isTaxable = 'is_taxable';
+	static $price = 'price'; // array key
 
-	static $isDiscountable = 'is_discountable';
+	static $isTaxable = 'is_taxable'; // array key
 
-	static $weight = 'weight';
+	static $isDiscountable = 'is_discountable'; // array key
 
-	static $method = 'method';
+	static $weight = 'weight'; // array key
 
-	static $vendor = 'vendor';
+	static $method = 'method'; // array key
 
-	public function __construct($shipmentId = 0, $price = '', $isTaxable = false, $isDiscountable = true, $weight = '', $method = '', $vendor = '')
+	static $vendor = 'vendor'; // array key
+
+	static $prefix = 'shipment-'; // array key prefix
+
+	public function __construct($id = 0, $price = '0.00', $isTaxable = false, $isDiscountable = true, $weight = '', $method = '', $vendor = '')
 	{
-		$this->_shipmentId = $shipmentId;
+		$this->_id = $id;
 		$this->_vendor = $vendor;
 		$this->_method = $method;
 		$this->_weight = $weight;
@@ -78,6 +82,14 @@ class Shipment
 		$this->_isTaxable = $isTaxable;
 		$this->_isDiscountable = $isDiscountable;
 		$this->_items = array();
+	}
+
+	/**
+	 * Get key for associative arrays
+	 */
+	static function getKey($id)
+	{
+		return self::$prefix . $id;
 	}
 
 	/**
@@ -102,7 +114,7 @@ class Shipment
 	public function toArray()
 	{
 		return array(
-			self::$shipmentId      => $this->getShipmentId(),
+			self::$id    		   => $this->getId(),
 			self::$price           => $this->getPrice(),
 			self::$isTaxable       => $this->getIsTaxable(),
 			self::$isDiscountable  => $this->getIsDiscountable(),
@@ -123,21 +135,23 @@ class Shipment
 
 		$data = @ (array) json_decode($json);
 
-		$shipmentId = isset($data[self::$shipmentId]) ? $data[self::$shipmentId] : '';
+		$id = isset($data[self::$id]) ? $data[self::$id] : '';
 		$price = isset($data[self::$price]) ? $data[self::$price] : 0;
 		$isTaxable = isset($data[self::$isTaxable]) ? $data[self::$isTaxable] : false;
 		$isDiscountable = isset($data[self::$isDiscountable]) ? $data[self::$isDiscountable] : false;
 		$weight = isset($data[self::$weight]) ? $data[self::$weight] : 0;
 		$method = isset($data[self::$method]) ? $data[self::$method] : '';
 		$vendor = isset($data[self::$vendor]) ? $data[self::$vendor] : '';
+		$items = isset($data[self::$items]) ? $data[self::$items] : array();
 
-		$this->_shipmentId = $shipmentId;
+		$this->_id = $id;
 		$this->_price = $price;
 		$this->_isTaxable = $isTaxable;
 		$this->_isDiscountable = $isDiscountable;
 		$this->_weight = $weight;
 		$this->_method = $method;
 		$this->_vendor = $vendor;
+		$this->_items = $items;
 
 		return $this;
 	}
@@ -147,30 +161,32 @@ class Shipment
 	 */
 	public function reset()
 	{
-		$this->_shipmentId = '';
+		$this->_id = '';
 		$this->_price = 0;
 		$this->_isTaxable = false;
 		$this->_isDiscountable = true;
 		$this->_weight = 0;
 		$this->_method = '';
 		$this->_vendor = '';
+		$this->_items = array();
+		
 		return $this;
 	}
 
 	/**
 	 * Accessor
 	 */
-	public function getShipmentId()
+	public function getId()
 	{
-		return $this->_shipmentId;
+		return $this->_id;
 	}
 
 	/**
 	 * Mutator
 	 */
-	public function setShipmentId($shipmentId)
+	public function setId($id)
 	{
-		$this->_shipmentId = $shipmentId;
+		$this->_id = $id;
 		return $this;
 	}
 
@@ -285,23 +301,35 @@ class Shipment
 	}
 
 	/**
-	 * Add an item to this shipment
+	 * Add an item reference to this shipment
 	 */
-	public function addItem($productKey, Item $item)
+	public function addItem(Item $item)
 	{
-		$this->_items[$productKey] = $item;
+		$key = Item::getKey($item->getId());
+		$this->_items[$key] = $key;
 		return $this;
 	}
 
 	/**
-	 * Remove an item from this shipment
+	 * Remove an item reference from this shipment
 	 */
-	public function removeItem($productKey)
+	public function removeItem($key)
 	{
-		if (isset($this->_items[$productKey])) {
-			unset($this->_items[$productKey]);
+		if (isset($this->_items[$key])) {
+			unset($this->_items[$key]);
 		}
 		return $this;
+	}
+
+	/**
+	 * Assert item reference exists
+	 *
+	 * @param string itemKey
+	 * @return boolean hasItem
+	 */
+	public function hasItem($key)
+	{
+		return isset($this->_items[$key]);
 	}
 
 }

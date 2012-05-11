@@ -830,6 +830,9 @@ class Cart
 
                         // Item can over-ride Discount, but not the other way around
                         if ($item->getIsDiscountable()) {
+                            if ($item->getQty() < $qty) {
+                                $qty = $item->getQty();
+                            }
                             $specifiedTotal += $this->currency($price * $qty);
                         }
                     }
@@ -882,6 +885,9 @@ class Cart
                         $item = $this->getItem($key);
                         $price = $item->getPrice();
                         if ($item->getIsDiscountable()) {
+                            if ($item->getQty() < $qty) {
+                                $qty = $item->getQty();
+                            }
                             $specifiedTotal += $this->currency($price * $qty);
                         }
                     }

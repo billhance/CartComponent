@@ -6,8 +6,6 @@
  * Discounts can be applied to shipments or items in general, or to specific items, shipments
  * If a Discount is declared as 'specified', the Items and Shipments specified within the Discount
  *  will not be able to be discounted by other general or non-specific Discounts.
- * At this time, Items and Shipments within multiple specified-type discounts can be discounted more than once.
- * Specified-type Discounts and non-specified-type Discounts are mutually exclusive.
  * Items and Shipments within multiple specified-type discounts can be discounted more than once, 
  *  as well as for non-specified-type Discounts. (they are mutually exclusive however)
  *

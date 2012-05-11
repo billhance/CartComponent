@@ -7,6 +7,7 @@ require_once(__DIR__ . '/Cart/Shipment.php');
 
 $itemA = new Item(1234, '12.50');
 $itemB = new Item(4312, '99.99');
+$itemB->setIsTaxable(true);
 
 $shipmentA = new Shipment(3, '11.99');
 $shipmentA->setIsDiscountable(false)

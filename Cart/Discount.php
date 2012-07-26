@@ -53,12 +53,12 @@ class Discount
     protected $_name;
 
     /**
-     *
+     * @var int timestamp
      */
     protected $_startDatetime;
 
     /**
-     *
+     * @var int timestamp
      */
     protected $_endDatetime;
 
@@ -181,6 +181,10 @@ class Discount
 
     /**
      * Import composition from json
+     *
+     * @param string $json
+     * @param bool
+     * @return Discount
      */
     public function importJson($json, $reset = true)
     {
@@ -269,7 +273,11 @@ class Discount
     }
 
     /**
-     * Import composition from stdClass
+     * Import from stdClass
+     *
+     * @param stdClass
+     * @param bool
+     * @return Discount
      */
     public function importStdClass($obj, $reset = true)
     {
@@ -369,7 +377,10 @@ class Discount
     }
 
     /**
+     * Import from Entity
      *
+     * @param object|mixed
+     * @return Discount
      */
     public function importEntity($entity)
     {
@@ -413,6 +424,8 @@ class Discount
 
     /**
      * Reset object to defaults
+     *
+     * @return Discount
      */
     public function reset()
     {
@@ -437,7 +450,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getId()
     {
@@ -445,7 +458,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setId($id)
     {
@@ -454,7 +467,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getName()
     {
@@ -462,7 +475,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setName($name)
     {
@@ -471,7 +484,7 @@ class Discount
     }
 
     /**
-     *
+     * Getter
      */
     public function getCriteriaConditionCompare()
     {
@@ -479,7 +492,7 @@ class Discount
     }
 
     /**
-     *
+     * Setter
      */
     public function setCriteriaConditionCompare(DiscountConditionCompare $compare)
     {
@@ -488,7 +501,7 @@ class Discount
     }
 
     /**
-     *
+     * Getter
      */
     public function getTargetConditionCompare()
     {
@@ -496,7 +509,7 @@ class Discount
     }
 
     /**
-     *
+     * Setter
      */
     public function setTargetConditionCompare(DiscountConditionCompare $compare)
     {
@@ -505,7 +518,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getAs()
     {
@@ -513,7 +526,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setAs($as)
     {
@@ -522,7 +535,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getValue()
     {
@@ -530,7 +543,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setValue($value)
     {
@@ -539,7 +552,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getTo()
     {
@@ -547,7 +560,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setTo($to)
     {
@@ -556,7 +569,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsPreTax()
     {
@@ -564,7 +577,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIsPreTax($beforeTax)
     {
@@ -573,7 +586,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsAuto()
     {
@@ -581,7 +594,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIsAuto($isAuto)
     {
@@ -590,7 +603,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getCouponCode()
     {
@@ -598,7 +611,7 @@ class Discount
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setCouponCode($couponCode)
     {
@@ -611,7 +624,7 @@ class Discount
     // set $this->_to = self::$toSpecified
 
     /**
-     * Accessor
+     * Getter
      */
     public function getItems()
     {
@@ -620,6 +633,8 @@ class Discount
 
     /**
      * Add an Item to this Discount
+     *
+     * @return Discount
      */
     public function addItem(Item $item, $qty = 1)
     {
@@ -630,6 +645,8 @@ class Discount
 
     /**
      * Remove an Item from this Discount
+     *
+     * @return Discount
      */
     public function removeItem($key)
     {
@@ -656,6 +673,8 @@ class Discount
 
     /**
      * Set quantity to item
+     *
+     * @return Discount
      */
     public function setItemQty($key, $qty)
     {
@@ -666,7 +685,9 @@ class Discount
     }
 
     /**
+     * Export Shipments as one large array
      *
+     * @return array
      */
     public function getShipmentsAsArray()
     {
@@ -688,7 +709,7 @@ class Discount
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getShipments()
     {
@@ -697,6 +718,8 @@ class Discount
 
     /**
      * Add a Shipment to this Discount
+     *
+     * @return Discount
      */
     public function addShipment(Shipment $shipment)
     {
@@ -707,6 +730,8 @@ class Discount
 
     /**
      * Remove an Item from this Discount
+     *
+     * @return Discount
      */
     public function removeShipment($key)
     {
@@ -728,7 +753,7 @@ class Discount
     }
 
     /**
-     *
+     * Getter
      */
     public function getIsStopper()
     {
@@ -736,7 +761,7 @@ class Discount
     }
 
     /**
-     *
+     * Setter
      */
     public function setIsStopper($isStopper)
     {
@@ -745,7 +770,7 @@ class Discount
     }
 
     /**
-     *
+     * Getter
      */
     public function getPriority()
     {
@@ -753,7 +778,7 @@ class Discount
     }
 
     /**
-     *
+     * Setter
      */
     public function setPriority($priority)
     {

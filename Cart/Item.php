@@ -67,9 +67,7 @@ class Item
         return self::$prefix . $itemId;
     }
     
-    /**
-     *
-     */
+
     public function __construct($qty = 1) 
     {
         $this->reset();
@@ -77,6 +75,8 @@ class Item
     }
     
     /**
+     * Serialize object as string
+     *
      * @return string
      */
     public function __toString()
@@ -85,7 +85,7 @@ class Item
     }
 
     /**
-     * Encapsulate object as formatted json string
+     * Serialize object as json string
      *
      * @return string
      */
@@ -95,7 +95,7 @@ class Item
     }
 
     /**
-     * Encapsulate object as formatted array
+     * Serialize object as array
      *
      * @return array
      */
@@ -119,7 +119,7 @@ class Item
      * Import object from json string
      *
      * @param string $json
-     * @return $this
+     * @return Item
      */
     public function importJson($json, $reset = true)
     {
@@ -158,7 +158,7 @@ class Item
      * Import object from stdClass
      *
      * @param string $json
-     * @return $this
+     * @return Item
      */
     public function importStdClass($obj, $reset = true)
     {
@@ -192,7 +192,10 @@ class Item
     }
 
     /**
+     * Import object from Entity
      *
+     * @param object|mixed
+     * @return Item
      */
     public function importEntity($entity)
     {
@@ -226,7 +229,7 @@ class Item
     /**
      * Reset object to default values
      *
-     * @return $this
+     * @return Item
      */
     public function reset()
     {
@@ -244,6 +247,9 @@ class Item
 
     /**
      * Check if this Item validates a condition
+     *
+     * @param DiscountCondition
+     * @return bool
      */
     public function isValidCondition(DiscountCondition $condition)
     {
@@ -269,7 +275,10 @@ class Item
     }
 
     /**
+     * Check if this Item validates a condition comparison
      *
+     * @param DiscountConditionCompare
+     * @return bool
      */
     public function isValidConditionCompare(DiscountConditionCompare $compare)
     {
@@ -277,7 +286,7 @@ class Item
     }
     
     /**
-     * Accessor for id
+     * Getter
      *
      * @return int
      */
@@ -287,7 +296,7 @@ class Item
     }
 
     /**
-     * Set product id
+     * Setter
      *
      * @param int $id
      * @return $this
@@ -299,7 +308,7 @@ class Item
     }
 
     /**
-     *
+     * Getter
      */
     public function getSku()
     {
@@ -307,7 +316,7 @@ class Item
     }
 
     /**
-     *
+     * Setter
      */
     public function setSku($sku)
     {
@@ -316,7 +325,7 @@ class Item
     }
 
     /**
-     *
+     * Getter
      */
     public function getName()
     {
@@ -324,7 +333,7 @@ class Item
     }
 
     /**
-     *
+     * Setter
      */
     public function setName($name)
     {
@@ -345,7 +354,7 @@ class Item
     }
 
     /**
-     * Accessor for product price
+     * Getter for product price
      *
      * @return float
      */
@@ -355,7 +364,7 @@ class Item
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setQty($qty)
     {
@@ -364,7 +373,7 @@ class Item
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getQty()
     {
@@ -372,7 +381,7 @@ class Item
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsTaxable()
     {
@@ -380,7 +389,7 @@ class Item
     }
 
     /**
-     * Mutator
+     * Setter
      * 
      * @param bool $isTaxable
      */
@@ -391,7 +400,7 @@ class Item
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsDiscountable()
     {
@@ -399,7 +408,7 @@ class Item
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIsDiscountable($isDiscountable)
     {
@@ -408,7 +417,7 @@ class Item
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getCategoryIdsCsv()
     {
@@ -416,7 +425,7 @@ class Item
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setCategoryIdsCsv($categoryIds)
     {
@@ -425,7 +434,7 @@ class Item
     }
 
     /**
-     * Accessor for custom product variables
+     * Getter for custom product variables
      *
      * @return array
      */
@@ -439,7 +448,7 @@ class Item
      *
      * @param string $key
      * @param string $value
-     * @return $this
+     * @return Item
      */
     public function setCustom($key, $value)
     {
@@ -451,7 +460,7 @@ class Item
      * Remove custom product variable
      *
      * @param string $key
-     * @return $this
+     * @return Item
      */
     public function unsetCustom($key)
     {
@@ -462,7 +471,10 @@ class Item
     }
 
     /**
+     * Check if this Item has any custom vars set
      *
+     * @param string $key
+     * @return bool
      */
     public function hasCustom($key)
     {
@@ -470,7 +482,7 @@ class Item
     }
 
     /**
-     * Accessor for product variables
+     * Getter for product variables
      *
      * @return array
      */
@@ -484,7 +496,7 @@ class Item
      *
      * @param string $key
      * @param string $value
-     * @return $this
+     * @return Item
      */
     public function setVar($key, $value)
     {
@@ -496,7 +508,7 @@ class Item
      * Remove product variable
      *
      * @param string $key
-     * @return $this
+     * @return Item
      */
     public function unsetVar($key)
     {
@@ -507,7 +519,10 @@ class Item
     }
 
     /**
+     * Check if this Item has a var set
      *
+     * @param string $key
+     * @return bool
      */
     public function hasVar($key)
     {

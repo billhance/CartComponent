@@ -243,7 +243,7 @@ class Customer
     }
 
     /**
-     * Set _firstName
+     * Setter
      *
      * @param string $firstName
      */
@@ -254,7 +254,7 @@ class Customer
     }
 
     /**
-     * Get _firstName
+     * Getter
      *
      * @return string 
      */
@@ -264,7 +264,7 @@ class Customer
     }
 
     /**
-     * Set _lastName
+     * Setter
      *
      * @param string $lastName
      */
@@ -275,7 +275,7 @@ class Customer
     }
 
     /**
-     * Get _lastName
+     * Getter
      *
      * @return string 
      */
@@ -285,7 +285,7 @@ class Customer
     }
 
     /**
-     * Set _billingStreet
+     * Setter
      *
      * @param string $billingStreet
      */
@@ -296,7 +296,7 @@ class Customer
     }
 
     /**
-     * Get _billingStreet
+     * Getter
      *
      * @return string 
      */
@@ -306,7 +306,7 @@ class Customer
     }
 
     /**
-     * Set _billingCity
+     * Setter
      *
      * @param string $billingCity
      */
@@ -317,7 +317,7 @@ class Customer
     }
 
     /**
-     * Get _billingCity
+     * Getter
      *
      * @return string 
      */
@@ -327,7 +327,7 @@ class Customer
     }
 
     /**
-     * Set _billingState
+     * Setter
      *
      * @param string $billingState
      */
@@ -338,7 +338,7 @@ class Customer
     }
 
     /**
-     * Get _billingState
+     * Getter
      *
      * @return string 
      */
@@ -348,7 +348,7 @@ class Customer
     }
 
     /**
-     * Set _billingZipcode
+     * Setter
      *
      * @param string $billingZipcode
      */
@@ -359,7 +359,7 @@ class Customer
     }
 
     /**
-     * Get _billingZipcode
+     * Getter
      *
      * @return string 
      */
@@ -369,7 +369,7 @@ class Customer
     }
 
     /**
-     * Set _isShippingSame
+     * Setter
      *
      * @param boolean $isShippingSame
      */
@@ -380,7 +380,7 @@ class Customer
     }
 
     /**
-     * Get _isShippingSame
+     * Getter
      *
      * @return boolean 
      */
@@ -390,7 +390,7 @@ class Customer
     }
 
     /**
-     * Set _shippingStreet
+     * Setter
      *
      * @param string $shippingStreet
      */
@@ -401,7 +401,7 @@ class Customer
     }
 
     /**
-     * Get _shippingStreet
+     * Getter
      *
      * @return string 
      */
@@ -411,7 +411,7 @@ class Customer
     }
 
     /**
-     * Set _shippingCity
+     * Setter
      *
      * @param string $shippingCity
      */
@@ -422,7 +422,7 @@ class Customer
     }
 
     /**
-     * Get _shippingCity
+     * Getter
      *
      * @return string 
      */
@@ -432,7 +432,7 @@ class Customer
     }
 
     /**
-     * Set _shippingState
+     * Setter
      *
      * @param string $shippingState
      */
@@ -443,7 +443,7 @@ class Customer
     }
 
     /**
-     * Get _shippingState
+     * Getter
      *
      * @return string 
      */
@@ -453,7 +453,7 @@ class Customer
     }
 
     /**
-     * Set _shippingZipcode
+     * Setter
      *
      * @param string $shippingZipcode
      */
@@ -464,7 +464,7 @@ class Customer
     }
 
     /**
-     * Get _shippingZipcode
+     * Getter
      *
      * @return string 
      */
@@ -474,7 +474,7 @@ class Customer
     }
 
     /**
-     * Set email
+     * Setter
      *
      * @param text $email
      */
@@ -485,7 +485,7 @@ class Customer
     }
 
     /**
-     * Get email
+     * Getter
      *
      * @return text 
      */
@@ -495,7 +495,7 @@ class Customer
     }
 
     /**
-     * Set group
+     * Setter
      *
      * @param text $group
      */
@@ -506,7 +506,7 @@ class Customer
     }
 
     /**
-     * Get group
+     * Getter
      *
      * @return text 
      */
@@ -514,4 +514,5 @@ class Customer
     {
         return $this->_group;
     }
+    
 }

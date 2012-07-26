@@ -59,7 +59,7 @@ class Shipment
     }
 
     /**
-     * Serialize object as string (json)
+     * Serialize object as string
      */
     public function __toString()
     {
@@ -76,6 +76,8 @@ class Shipment
 
     /**
      * Serialize object as array
+     *
+     * @return array
      */
     public function toArray()
     {
@@ -94,6 +96,10 @@ class Shipment
 
     /**
      * Import object from json
+     *
+     * @param string $json
+     * @param bool
+     * @return Shipment
      */
     public function importJson($json, $reset = true)
     {
@@ -134,7 +140,10 @@ class Shipment
     }
 
     /**
+     * Import from stdClass
      *
+     * @param stdClass
+     * @return Shipment
      */
     public function importStdClass($obj)
     {
@@ -166,7 +175,9 @@ class Shipment
     }
 
     /**
-     * Reset to defaults
+     * Reset defaults
+     *
+     * @return Shipment
      */
     public function reset()
     {
@@ -183,7 +194,10 @@ class Shipment
     }
 
     /**
+     * Check if this Shipment validates a DiscountCondition
      *
+     * @param DiscountCondition
+     * @return bool
      */
     public function isValidCondition(DiscountCondition $condition)
     {
@@ -206,7 +220,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getId()
     {
@@ -214,7 +228,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setId($id)
     {
@@ -223,7 +237,7 @@ class Shipment
     }
 
     /**
-     *
+     * Getter
      */
     public function getCode()
     {
@@ -231,7 +245,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getPrice()
     {
@@ -239,7 +253,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setPrice($price)
     {
@@ -248,7 +262,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getWeight()
     {
@@ -256,7 +270,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsTaxable()
     {
@@ -264,7 +278,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIsTaxable($isTaxable)
     {
@@ -273,7 +287,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIsDiscountable()
     {
@@ -281,7 +295,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIsDiscountable($isDiscountable)
     {
@@ -290,7 +304,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setWeight($weight)
     {
@@ -299,7 +313,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getMethod()
     {
@@ -307,7 +321,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setMethod($method)
     {
@@ -316,7 +330,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getVendor()
     {
@@ -324,7 +338,7 @@ class Shipment
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setVendor($vendor)
     {
@@ -333,7 +347,7 @@ class Shipment
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getItems()
     {
@@ -342,6 +356,9 @@ class Shipment
 
     /**
      * Add an item reference to this shipment
+     *
+     * @param Item
+     * @return Shipment
      */
     public function addItem(Item $item)
     {
@@ -352,6 +369,9 @@ class Shipment
 
     /**
      * Remove an item reference from this shipment
+     *
+     * @param Item|string
+     * @return Shipment
      */
     public function removeItem($key)
     {
@@ -370,7 +390,7 @@ class Shipment
      * Assert item reference exists
      *
      * @param string itemKey
-     * @return boolean hasItem
+     * @return bool hasItem
      */
     public function hasItem($key)
     {

@@ -3,22 +3,22 @@
 class DiscountConditionCompare
 {
     /**
-     *
+     * @var int
      */
     protected $_id;
 
     /**
-     *
+     * @var string
      */
     protected $_op;
 
     /**
-     *
+     * @var bool
      */
     protected $_isNot;
 
     /**
-     *
+     * @var string
      */
     protected $_sourceEntityType;
 
@@ -31,22 +31,22 @@ class DiscountConditionCompare
     //         left OR right means return true if either left or right are true
 
     /**
-     *
+     * @var array of DiscountCondition|DiscountConditionCompare
      */
     protected $_conditions;
 
     /**
-     *
+     * @var DiscountCondition
      */
     protected $_leftCondition;
 
     /**
-     *
+     * @var DiscountCondition
      */
     protected $_rightCondition;
 
     /**
-     *
+     * array key prefix, prevents array key collisions
      */
     static $prefix = 'compare-';
 
@@ -60,13 +60,20 @@ class DiscountConditionCompare
         $this->reset();
     }
 
+    /**
+     * Encapsulate object as string
+     *
+     * @return string
+     */
     public function __toString()
     {
         return $this->toJson();
     }
 
     /**
+     * Encapsulate object as json string
      *
+     * @return string
      */
     public function toJson()
     {
@@ -74,7 +81,9 @@ class DiscountConditionCompare
     }
 
     /**
+     * Encapsulate object as array
      *
+     * @return array
      */
     public function toArray()
     {
@@ -99,7 +108,11 @@ class DiscountConditionCompare
     }
 
     /**
+     * Import from json string
      *
+     * @param string $json
+     * @param bool $reset
+     * @return string
      */
     public function importJson($json, $reset = true)
     {
@@ -207,7 +220,11 @@ class DiscountConditionCompare
     }
 
     /**
+     * Import from stdClass
      *
+     * @param stdClass
+     * @param bool
+     * @return DiscountConditionCompare
      */
     public function importStdClass($obj, $reset = true)
     {
@@ -314,7 +331,9 @@ class DiscountConditionCompare
     }
 
     /**
+     * Reset default values
      *
+     * @return DiscountConditionCompare
      */
     public function reset()
     {
@@ -329,7 +348,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getId()
     {
@@ -337,7 +356,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Setter
      */
     public function setId($id)
     {
@@ -346,7 +365,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getOp()
     {
@@ -354,7 +373,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Setter
      */
     public function setOp($op)
     {
@@ -363,7 +382,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getIsNot()
     {
@@ -371,7 +390,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Setter
      */
     public function setIsNot($isNot)
     {
@@ -380,7 +399,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getSourceEntityType()
     {
@@ -388,7 +407,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Setter
      */
     public function setSourceEntityType($type)
     {
@@ -397,7 +416,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getLeftCondition()
     {
@@ -405,7 +424,7 @@ class DiscountConditionCompare
     }
 
     /**
-     * Mutator
+     * Setter
      *
      * @param DiscountCondition|DiscountConditionCompare $condition
      */
@@ -420,7 +439,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getRightCondition()
     {
@@ -428,7 +447,7 @@ class DiscountConditionCompare
     }
 
     /**
-     * Mutator
+     * Setter
      *
      * @param DiscountCondition|DiscountConditionCompare
      */
@@ -443,7 +462,7 @@ class DiscountConditionCompare
     }
 
     /**
-     * Mutator
+     * Setter
      *
      * @param DiscountCondition|DiscountConditionCompare
      */
@@ -468,7 +487,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getCondition($key)
     {
@@ -476,7 +495,10 @@ class DiscountConditionCompare
     }
 
     /**
+     * Remove DiscountCondition by key
      *
+     * @param string
+     * @return DiscountConditionCompare
      */
     public function removeCondition($key)
     {
@@ -487,7 +509,7 @@ class DiscountConditionCompare
     }
 
     /**
-     *
+     * Getter
      */
     public function getConditions()
     {
@@ -495,7 +517,10 @@ class DiscountConditionCompare
     }
 
     /**
+     * Export conditions as one large array
      *
+     * @param $object null|DiscountConditionCompare
+     * @return array
      */
     public function getConditionsAsArray($object = null)
     {
@@ -553,7 +578,10 @@ class DiscountConditionCompare
     }
 
     /**
+     * Check if an object validates against set conditions
      *
+     * @param Item|Shipment|Customer
+     * @return bool
      */
     public function isValid($object)
     {

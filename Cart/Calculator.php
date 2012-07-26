@@ -7,16 +7,17 @@ class Calculator {
      */
     protected $_cart;
     
-    /**
-     *
-     */
+    
     public function __construct(Cart $cart = null)
     {
         $this->_cart = $cart;
     }
 
     /**
+     * Setter
      *
+     * @param Cart $cart
+     * @return $this
      */
     public function setCart(Cart $cart)
     {
@@ -25,7 +26,9 @@ class Calculator {
     }
 
     /**
+     * Accessor
      *
+     * @return Cart
      */
     public function getCart()
     {
@@ -34,6 +37,9 @@ class Calculator {
 
     /**
      * Decorator for float values
+     *
+     * @param mixed
+     * @return string
      */
     public function currency($value)
     {
@@ -43,6 +49,9 @@ class Calculator {
 
     /**
      * Decorator for float values
+     *
+     * @param mixed
+     * @return string
      */
     public function format($value)
     {
@@ -52,6 +61,8 @@ class Calculator {
 
     /**
      * Get all totals
+     *
+     * @return array
      */
     public function getTotals()
     {
@@ -65,7 +76,9 @@ class Calculator {
     }
 
     /**
+     * Get discounted totals
      *
+     * @return array
      */
     public function getDiscountedTotals()
     {
@@ -87,6 +100,8 @@ class Calculator {
      *  2. Products or Shipments may be taxable. 
      *  3. Discounts may apply to either shipments or items; before or after tax
      *  4. Percentage discounts are not compounded . This would require a relatively chaotic "weighting system"; add too much complexity
+     *
+     * @return string
      */
     public function getTotal()
     {
@@ -97,7 +112,9 @@ class Calculator {
     }
 
     /**
-     * 
+     * Get total of Items, after Discounts
+     *
+     * @return string
      */
     public function getDiscountedItemTotal()
     {
@@ -106,7 +123,9 @@ class Calculator {
     }
 
     /**
-     * Get Item Total
+     * Get Item Total, before Discounts
+     *
+     * @return string
      */
     public function getItemTotal()
     {
@@ -126,7 +145,9 @@ class Calculator {
     }
 
     /**
-     * 
+     * Get total of Shipments, after Discounts
+     *
+     * @return string
      */
     public function getDiscountedShipmentTotal()
     {
@@ -138,7 +159,9 @@ class Calculator {
     }
 
     /**
-     * Get Shipping Total
+     * Get total of Shipments, before Discounts
+     *
+     * @return string
      */
     public function getShipmentTotal()
     {
@@ -155,7 +178,9 @@ class Calculator {
     }
 
     /**
-     * Get Tax Total
+     * Get total Tax, after Discounts
+     *
+     * @return string
      */
     public function getTaxTotal()
     {
@@ -209,6 +234,8 @@ class Calculator {
      * Get Discount Total
      *  Also ensure that the sum of pre-tax discounts, and post-tax discounts
      *  is not more than is discountable, for both Items and Shipments
+     *
+     * @return string
      */
     public function getDiscountTotal()
     {
@@ -222,6 +249,8 @@ class Calculator {
 
     /**
      * Get total discount of Items.
+     *
+     * @return string
      */
     public function getItemDiscountTotal()
     {
@@ -238,6 +267,8 @@ class Calculator {
      * Get total discount of non-specified shipments.
      * This method can be used to ensure the sum of pre-tax 
      *  and post-tax discounts to Shipments, is not more than is discountable
+     *
+     * @return string
      */
     public function getShipmentDiscountTotal()
     {
@@ -252,6 +283,8 @@ class Calculator {
 
     /**
      * Get total Item/Shipment discount before tax
+     *
+     * @return string
      */
     public function getPreTaxDiscountTotal()
     {
@@ -262,6 +295,8 @@ class Calculator {
 
     /**
      * Get Discount total after tax
+     *
+     * @return string
      */
     public function getPostTaxDiscountTotal()
     {
@@ -272,6 +307,8 @@ class Calculator {
 
     /**
      * Get total Shipment discount before tax
+     *
+     * @return string
      */
     public function getPreTaxShipmentDiscountTotal()
     {
@@ -307,8 +344,8 @@ class Calculator {
 
     /**
      * Get Total Shipment Discount After Tax
-     *  By default, only non-specified and discountable items are included
      * 
+     * @return string
      */
     public function getPostTaxShipmentDiscountTotal()
     {
@@ -344,6 +381,8 @@ class Calculator {
 
     /**
      * Get total Item discount before tax
+     *
+     * @return string
      */
     public function getPreTaxItemDiscountTotal()
     {
@@ -380,6 +419,8 @@ class Calculator {
 
     /**
      * Get total Item discount after tax
+     *
+     * @return string
      */
     public function getPostTaxItemDiscountTotal()
     {
@@ -415,6 +456,8 @@ class Calculator {
 
     /**
      * Get Total (specified) Item discount after Tax
+     *
+     * @return string
      */
     public function getPostTaxSpecifiedItemDiscountTotal()
     {
@@ -456,6 +499,8 @@ class Calculator {
 
     /**
      * Get Total (specified) Shipment discount after Tax
+     *
+     * @return string
      */
     public function getPostTaxSpecifiedShipmentDiscountTotal()
     {
@@ -495,6 +540,8 @@ class Calculator {
 
     /**
      * Get Total (specified) Item discount before Tax
+     *
+     * @return string
      */
     public function getPreTaxSpecifiedItemDiscountTotal()
     {
@@ -536,6 +583,8 @@ class Calculator {
 
     /**
      * Get Total (specified) Shipment discount before Tax
+     *
+     * @return string
      */
     public function getPreTaxSpecifiedShipmentDiscountTotal()
     {
@@ -576,6 +625,8 @@ class Calculator {
 
     /**
      * Get the max amount that can be taxed, for Items and Shipments
+     *
+     * @return string
      */
     public function getTaxableTotal()
     {
@@ -584,6 +635,8 @@ class Calculator {
 
     /**
      * Get the max amount that can be taxed on items
+     *
+     * @return string
      */
     public function getTaxableItemTotal()
     {
@@ -600,7 +653,8 @@ class Calculator {
 
     /**
      * Get taxable shipment total
-     *  , by getting the sum of taxable shipments; regardless of type
+     *
+     * @return string
      */
     public function getTaxableShipmentTotal()
     {
@@ -617,6 +671,8 @@ class Calculator {
 
     /**
      * Get discountable shipment total
+     *
+     * @return string
      */
     public function getDiscountableShipmentTotal()
     {
@@ -633,6 +689,8 @@ class Calculator {
 
     /**
      * Get the max amount that can be discounted from Items
+     *
+     * @return string
      */
     public function getDiscountableItemTotal()
     {

@@ -74,6 +74,8 @@ class Cart
 
     /**
      * Retrieve calculator
+     *
+     * @return Calculator
      */
     public function getCalculator()
     {
@@ -82,6 +84,8 @@ class Cart
 
     /**
      * Get all totals from calculator
+     *
+     * @return array
      */
     public function getTotals()
     {
@@ -90,6 +94,8 @@ class Cart
 
     /**
      * Get all totals from calculator
+     *
+     * @return array
      */
     public function getDiscountedTotals()
     {
@@ -97,7 +103,9 @@ class Cart
     }
 
     /**
+     * Encapsulate object into string
      *
+     * @return string
      */
     public function __toString()
     {
@@ -116,6 +124,8 @@ class Cart
 
     /**
      * Serialize object to array
+     *
+     * @return array
      */
     public function toArray()
     {
@@ -132,7 +142,9 @@ class Cart
     }
 
     /**
+     * Export Discounts as one large array
      *
+     * @return array
      */
     public function getDiscountsAsArray()
     {
@@ -146,7 +158,9 @@ class Cart
     }
 
     /**
+     * Export Items as one large array
      *
+     * @return array
      */
     public function getItemsAsArray()
     {
@@ -160,7 +174,9 @@ class Cart
     }
 
     /**
+     * Export Shipments as one large array
      *
+     * @return array
      */
     public function getShipmentsAsArray()
     {
@@ -176,6 +192,9 @@ class Cart
     /**
      * Import object data from json string.
      *
+     * @param string $json
+     * @param bool $reset
+     * @return $this
      */
     public function importJson($json, $reset = true)
     {
@@ -261,8 +280,9 @@ class Cart
     }
     
     /**
-     * Empty arrays
+     * Reset all default values
      *
+     * @return $this
      */
     public function reset()
     {
@@ -281,7 +301,10 @@ class Cart
     }
 
     /**
+     * Validate DiscountCondition
      *
+     * @param DiscountCondition
+     * @return bool
      */
     public function isValidCondition(DiscountCondition $condition)
     {
@@ -314,6 +337,8 @@ class Cart
 
     /**
      * Set decimal point precision
+     *
+     * @return $this
      */
     public function setPrecision($precision)
     {
@@ -323,6 +348,8 @@ class Cart
 
     /**
      * Get decimal point precision
+     *
+     * @return int
      */
     public function getPrecision()
     {
@@ -331,6 +358,8 @@ class Cart
 
     /**
      * Set decimal point precision
+     *
+     * @return $this
      */
     public function setCalculatorPrecision($precision)
     {
@@ -340,6 +369,8 @@ class Cart
 
     /**
      * Get decimal point precision
+     *
+     * @return int
      */
     public function getCalculatorPrecision()
     {
@@ -347,7 +378,7 @@ class Cart
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setId($id)
     {
@@ -356,7 +387,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getId()
     {
@@ -364,7 +395,7 @@ class Cart
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setCustomer(Customer $customer)
     {
@@ -373,7 +404,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getCustomer()
     {
@@ -381,7 +412,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getItems()
     {
@@ -389,7 +420,9 @@ class Cart
     }
 
     /**
-     * Retrieve Item
+     * Retrieve Item by key
+     *
+     * @return Item
      */
     public function getItem($key)
     {
@@ -427,7 +460,9 @@ class Cart
     }
 
     /**
+     * Check if cart has Items
      *
+     * @return bool
      */
     public function hasItems()
     {
@@ -438,7 +473,7 @@ class Cart
      * Assert Item exists
      *
      * @param string itemKey
-     * @return boolean hasItem
+     * @return bool hasItem
      */
     public function hasItem($key)
     {
@@ -473,7 +508,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getDiscounts()
     {
@@ -481,7 +516,9 @@ class Cart
     }
 
     /**
-     * Retrieve Discount
+     * Retrieve Discount by key
+     *
+     * @return Discount
      */
     public function getDiscount($key)
     {
@@ -491,6 +528,7 @@ class Cart
     /**
      * Add Discount to cart
      *
+     * @return $this
      */
     public function addDiscount(Discount $discount)
     {
@@ -502,6 +540,7 @@ class Cart
     /**
      * Remove Discount from cart
      *
+     * @return $this
      */
     public function removeDiscount($key)
     {
@@ -528,7 +567,9 @@ class Cart
     }
 
     /**
+     * Check if cart has discounts
      *
+     * @return bool
      */
     public function hasDiscounts()
     {
@@ -536,7 +577,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getShipments()
     {
@@ -544,7 +585,9 @@ class Cart
     }
 
     /**
-     * Retrieve Shipment
+     * Retrieve Shipment by key
+     *
+     * @return Shipment
      */
     public function getShipment($key)
     {
@@ -595,7 +638,9 @@ class Cart
     }
 
     /**
+     * Check if cart has Shipments
      *
+     * @return bool
      */
     public function hasShipments()
     {
@@ -629,6 +674,8 @@ class Cart
 
     /**
      * Get Discounts before Tax
+     *
+     * @return array
      */
     public function getPreTaxDiscounts()
     {
@@ -666,7 +713,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getTaxRate()
     {
@@ -674,7 +721,7 @@ class Cart
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setTaxRate($taxRate)
     {
@@ -683,7 +730,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getIncludeTax()
     {
@@ -691,7 +738,7 @@ class Cart
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setIncludeTax($includeTax)
     {
@@ -700,7 +747,7 @@ class Cart
     }
 
     /**
-     * Accessor
+     * Getter
      */
     public function getDiscountTaxableLast()
     {
@@ -708,7 +755,7 @@ class Cart
     }
 
     /**
-     * Mutator
+     * Setter
      */
     public function setDiscountTaxableLast($discountTaxableLast)
     {

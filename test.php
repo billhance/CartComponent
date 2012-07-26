@@ -121,7 +121,6 @@ $compare2->setId(2)
          ;
 
 $compare3 = new DiscountConditionCompare();
-$compare3Key = DiscountConditionCompare::getKey(3);
 $compare3->setId(3)
          ->setOp('and') // doing a linear 'and'
          ->setSourceEntityType('items')
@@ -161,6 +160,7 @@ if ($compare1->isValid($shipmentA)) {
     $cart->addDiscount($discountA);
 }
 
+//check pre-conditions and target conditions
 if ($compare3->isValid($itemA) && $compare2->isValid($itemB)) {
     $discountB->addItem($itemB);
     $cart->addDiscount($discountB);

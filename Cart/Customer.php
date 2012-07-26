@@ -2,7 +2,7 @@
 
 class Customer 
 {
-	/**
+    /**
      * @var integer $id
      */
     protected $_id;
@@ -85,7 +85,7 @@ class Customer
      */
     public function __toString()
     {
-    	return $this->toJson();
+        return $this->toJson();
     }
 
     /**
@@ -93,7 +93,7 @@ class Customer
      */
     public function toJson()
     {
-    	return json_encode($this->toArray());
+        return json_encode($this->toArray());
     }
 
     /**
@@ -101,22 +101,22 @@ class Customer
      */
     public function toArray()
     {
-    	return array(
-    		'id'               => $this->getId(),
+        return array(
+            'id'               => $this->getId(),
             'group'            => $this->getGroup(),
-    		'email'            => $this->getEmail(),
-    		'first_name'       => $this->getFirstName(),
-    		'last_name'        => $this->getLastName(),
-    		'billing_street'   => $this->getBillingStreet(),
-    		'billing_city'     => $this->getBillingCity(),
-    		'billing_state'    => $this->getBillingState(),
-    		'billing_zipcode'  => $this->getBillingZipcode(),
-    		'is_shipping_same' => $this->getIsShippingSame(),
-    		'shipping_street'  => $this->getShippingStreet(),
-    		'shipping_city'    => $this->getShippingCity(),
-    		'shipping_state'   => $this->getShippingState(),
-    		'shipping_zipcode' => $this->getShippingZipcode(),
-    	);
+            'email'            => $this->getEmail(),
+            'first_name'       => $this->getFirstName(),
+            'last_name'        => $this->getLastName(),
+            'billing_street'   => $this->getBillingStreet(),
+            'billing_city'     => $this->getBillingCity(),
+            'billing_state'    => $this->getBillingState(),
+            'billing_zipcode'  => $this->getBillingZipcode(),
+            'is_shipping_same' => $this->getIsShippingSame(),
+            'shipping_street'  => $this->getShippingStreet(),
+            'shipping_city'    => $this->getShippingCity(),
+            'shipping_state'   => $this->getShippingState(),
+            'shipping_zipcode' => $this->getShippingZipcode(),
+        );
     }
 
     /**
@@ -124,40 +124,40 @@ class Customer
      */
     public function importJson($json)
     {
-    	$data = @ (array) json_decode($json);
+        $data = @ (array) json_decode($json);
 
-    	$id = isset($data['id']) ? $data['id'] : '';
+        $id = isset($data['id']) ? $data['id'] : '';
         $group = isset($data['group']) ? $data['group'] : '';
-    	$email = isset($data['email']) ? $data['email'] : '';
-    	$firstName = isset($data['first_name']) ? $data['first_name'] : '';
-    	$lastName = isset($data['last_name']) ? $data['last_name'] : '';
-    	$billingStreet = isset($data['billing_street']) ? $data['billing_street'] : '';
-    	$billingCity = isset($data['billing_city']) ? $data['billing_city'] : '';
-    	$billingState = isset($data['billing_state']) ? $data['billing_state'] : '';
-    	$billingZipcode = isset($data['billing_zipcode']) ? $data['billing_zipcode'] : '';
-    	$isShippingSame = isset($data['is_shipping_same']) ? $data['is_shipping_same'] : '';
-    	$shippingStreet = isset($data['shipping_street']) ? $data['shipping_street'] : '';
-    	$shippingCity = isset($data['shipping_city']) ? $data['shipping_city'] : '';
-    	$shippingState = isset($data['shipping_state']) ? $data['shipping_state'] : '';
-    	$shippingZipcode = isset($data['shipping_zipcode']) ? $data['shipping_zipcode'] : '';
+        $email = isset($data['email']) ? $data['email'] : '';
+        $firstName = isset($data['first_name']) ? $data['first_name'] : '';
+        $lastName = isset($data['last_name']) ? $data['last_name'] : '';
+        $billingStreet = isset($data['billing_street']) ? $data['billing_street'] : '';
+        $billingCity = isset($data['billing_city']) ? $data['billing_city'] : '';
+        $billingState = isset($data['billing_state']) ? $data['billing_state'] : '';
+        $billingZipcode = isset($data['billing_zipcode']) ? $data['billing_zipcode'] : '';
+        $isShippingSame = isset($data['is_shipping_same']) ? $data['is_shipping_same'] : '';
+        $shippingStreet = isset($data['shipping_street']) ? $data['shipping_street'] : '';
+        $shippingCity = isset($data['shipping_city']) ? $data['shipping_city'] : '';
+        $shippingState = isset($data['shipping_state']) ? $data['shipping_state'] : '';
+        $shippingZipcode = isset($data['shipping_zipcode']) ? $data['shipping_zipcode'] : '';
 
-    	$this->setId($id)
+        $this->setId($id)
              ->setGroup($group)
-    	     ->setEmail($email)
-    	     ->setFirstName($firstName)
-    	     ->setLastName($lastName)
-    	     ->setBillingStreet($billingStreet)
-    	     ->setBillingCity($billingCity)
-    	     ->setBillingState($billingState)
-    	     ->setBillingZipcode($billingZipcode)
-    	     ->setIsShippingSame($isShippingSame)
-    	     ->setShippingStreet($shippingStreet)
-    	     ->setShippingCity($shippingCity)
-    	     ->setShippingState($shippingState)
-    	     ->setShippingZipcode($shippingZipcode)
-    	     ;
+             ->setEmail($email)
+             ->setFirstName($firstName)
+             ->setLastName($lastName)
+             ->setBillingStreet($billingStreet)
+             ->setBillingCity($billingCity)
+             ->setBillingState($billingState)
+             ->setBillingZipcode($billingZipcode)
+             ->setIsShippingSame($isShippingSame)
+             ->setShippingStreet($shippingStreet)
+             ->setShippingCity($shippingCity)
+             ->setShippingState($shippingState)
+             ->setShippingZipcode($shippingZipcode)
+             ;
 
-    	return $this;
+        return $this;
     }
 
     /**
@@ -238,8 +238,8 @@ class Customer
      */
     public function setId($id)
     {
-    	$this->_id = $id;
-    	return $this;
+        $this->_id = $id;
+        return $this;
     }
 
     /**

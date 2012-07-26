@@ -5,34 +5,34 @@ class Calculator {
     /**
      * @var Cart $cart
      */
-	protected $_cart;
-	
+    protected $_cart;
+    
     /**
      *
      */
-	public function __construct(Cart $cart = null)
-	{
-		$this->_cart = $cart;
-	}
+    public function __construct(Cart $cart = null)
+    {
+        $this->_cart = $cart;
+    }
 
-	/**
-	 *
-	 */
-	public function setCart(Cart $cart)
-	{
-		$this->_cart = $cart;
-		return $this;
-	}
+    /**
+     *
+     */
+    public function setCart(Cart $cart)
+    {
+        $this->_cart = $cart;
+        return $this;
+    }
 
-	/**
-	 *
-	 */
-	public function getCart()
-	{
-		return $this->_cart;
-	}
+    /**
+     *
+     */
+    public function getCart()
+    {
+        return $this->_cart;
+    }
 
-	/**
+    /**
      * Decorator for float values
      */
     public function currency($value)

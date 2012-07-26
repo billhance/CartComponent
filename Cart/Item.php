@@ -1,19 +1,21 @@
 <?php
 
-/**
- * Basic Cart Item object
- * This object is intended to represent a common shopping cart item.
- * A developer can load their own product objects, as needed, based on simple item data contained here
- *
- * (c) Jesse Hanson [jessehanson.com]
- */
-
 class Item 
 {
     /**
      * @var string|int
      */
     protected $_id; // YOUR product Id
+
+    /**
+     * @var string
+     */
+    protected $_sku;
+
+    /**
+     * @var string
+     */
+    protected $_name;
 
     /**
      * @var float
@@ -31,6 +33,11 @@ class Item
     protected $_weight;
 
     /**
+     * @var string
+     */
+    protected $_categoryIdsCsv;
+
+    /**
      * @var bool
      */
     protected $_isTaxable;
@@ -43,33 +50,14 @@ class Item
     /**
      * @var array
      */
-    protected $_custom; // YOUR key/value product variables
-    
-    //array keys for import/export
+    protected $_custom; // for personalizing items in cart
 
-    static $id = 'id';
-
-    static $price = 'price';
-    
-    static $qty = 'qty';
-    
-    static $custom = 'custom';
-
-    static $isTaxable = 'is_taxable';
-
-    static $isDiscountable = 'is_discountable';
+    /**
+     * @var array
+     */
+    protected $_vars; // your other product vars . should all be scalar
     
     static $prefix = 'item-';
-    
-    public function __construct($id = 0, $price = '', $qty = 1, $isTaxable = false, $isDiscountable = true, $custom = array()) 
-    {
-        $this->_id = $id;
-        $this->_price = $price;
-        $this->_qty = $qty;
-        $this->_isTaxable = $isTaxable;
-        $this->_isDiscountable = $isDiscountable;
-        $this->_custom = $custom;
-    }
 
     /**
      * Get key for associative arrays
@@ -79,6 +67,18 @@ class Item
         return self::$prefix . $itemId;
     }
     
+    /**
+     *
+     */
+    public function __construct($qty = 1) 
+    {
+        $this->reset();
+        $this->_qty = $qty;
+    }
+    
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return $this->toJson();
@@ -102,12 +102,15 @@ class Item
     public function toArray()
     {
         $data = array(
-            self::$id             => $this->getId(),
-            self::$price          => $this->getPrice(),
-            self::$qty            => $this->getQty(),
-            self::$custom         => $this->getCustom(),
-            self::$isTaxable      => $this->getIsTaxable(),
-            self::$isDiscountable => $this->getIsDiscountable(),
+            'id'              => $this->getId(),
+            'sku'             => $this->getSku(),
+            'name'            => $this->getName(),
+            'price'           => $this->getPrice(),
+            'qty'             => $this->getQty(),
+            'is_taxable'      => $this->getIsTaxable(),
+            'is_discountable' => $this->getIsDiscountable(),
+            'custom'          => $this->getCustom(),
+            'vars'            => $this->getVars(),
         );
         return $data;
     }
@@ -126,24 +129,97 @@ class Item
 
         //automatically resets object
         $data = @ (array) json_decode($json);
-        if (!isset($data[self::$id]) || !isset($data[self::$qty])) {
+        if (!isset($data['id']) || !isset($data['qty'])) {
             return false;
         }
 
-        $id = isset($data[self::$id]) ? $data[self::$id] : '';
-        $price = isset($data[self::$price]) ? $data[self::$price] : 0;
-        $qty = isset($data[self::$qty]) ? $data[self::$qty] : 0;
-        $custom = isset($data[self::$custom]) ? $data[self::$custom] : array();
-        $isTaxable = isset($data[self::$isTaxable]) ? $data[self::$isTaxable] : false;
-        $isDiscountable = isset($data[self::$isDiscountable]) ? $data[self::$isDiscountable] : true;
+        $id = isset($data['id']) ? $data['id'] : '';
+        $sku = isset($data['sku']) ? $data['sku'] : '';
+        $name = isset($data['name']) ? $data['name'] : '';
+        $price = isset($data['price']) ? $data['price'] : 0;
+        $qty = isset($data['qty']) ? $data['qty'] : 0;
+        $custom = isset($data['custom']) ? $data['custom'] : array();
+        $isTaxable = isset($data['is_taxable']) ? $data['is_taxable'] : false;
+        $isDiscountable = isset($data['is_discountable']) ? $data['is_discountable'] : true;
         
         $this->_id = $id;
+        $this->_sku = $sku;
+        $this->_name = $name;
         $this->_price = $price;
         $this->_qty = $qty;
         $this->_custom = $custom;
         $this->_isTaxable = $isTaxable;
         $this->_isDiscountable = $isDiscountable;
         
+        return $this;
+    }
+
+    /**
+     * Import object from stdClass
+     *
+     * @param string $json
+     * @return $this
+     */
+    public function importStdClass($obj, $reset = true)
+    {
+        if ($reset) {
+            $this->reset();
+        }
+
+        if (!$obj->id || !$obj->qty) {
+            return false;
+        }
+
+        $id = isset($obj->id) ? $obj->id : '';
+        $sku = isset($obj->sku) ? $obj->sku : '';
+        $name = isset($obj->name) ? $obj->name : '';
+        $price = isset($obj->price) ? $obj->price : 0;
+        $qty = isset($obj->qty) ? $obj->qty : 0;
+        $custom = isset($obj->custom) ? $obj->custom : array();
+        $isTaxable = isset($obj->is_taxable) ? $obj->is_taxable : false;
+        $isDiscountable = isset($obj->is_discountable) ? $obj->is_discountable : true;
+        
+        $this->_id = $id;
+        $this->_sku = $sku;
+        $this->_name = $name;
+        $this->_price = $price;
+        $this->_qty = $qty;
+        $this->_custom = $custom;
+        $this->_isTaxable = $isTaxable;
+        $this->_isDiscountable = $isDiscountable;
+        
+        return $this;
+    }
+
+    /**
+     *
+     */
+    public function importEntity($entity)
+    {
+        $this->reset();
+
+        $id = $entity->getId();
+        $sku = $entity->getSku();
+        $name = $entity->getName();
+        $price = $entity->getPrice(); // more prices?
+        $qty = $entity->getQty();
+
+        $custom = array(); // this doesnt apply. this is for personalizing items in the cart
+        $vars = array();
+
+        $isTaxable = $entity->getIsTaxable();
+        $isDiscountable = $entity->getIsDiscountable();
+
+        $this->_id = $id;
+        $this->_sku = $sku;
+        $this->_name = $name;
+        $this->_price = $price;
+        $this->_qty = $qty;
+        $this->_custom = $custom;
+        $this->_vars = $vars; // todo
+        $this->_isTaxable = $isTaxable;
+        $this->_isDiscountable = $isDiscountable;
+
         return $this;
     }
 
@@ -155,12 +231,49 @@ class Item
     public function reset()
     {
         $this->_id = 0;
+        $this->_sku = '';
+        $this->_name = '';
         $this->_price = 0;
         $this->_qty = 0;
         $this->_custom = array();
+        $this->_vars = array();
         $this->_isTaxable = false;
         $this->_isDiscountable = true;
         return $this;
+    }
+
+    /**
+     * Check if this Item validates a condition
+     */
+    public function isValidCondition(DiscountCondition $condition)
+    {
+        switch($condition->getSourceEntityField()) {
+            case 'price':
+                $condition->setSourceValue($this->getPrice());
+                break;
+            case 'weight':
+                $condition->setSourceValue($this->getWeight());
+                break;
+            case 'sku':
+                $condition->setSourceValue($this->getSku());
+                break;
+            case 'qty':
+                $condition->setSourceValue($this->getQty());
+                break;
+            case 'category_ids_csv':
+                $condition->setSourceValue($this->getCategoryIdsCsv());
+                break;
+        }
+
+        return $condition->isValid();
+    }
+
+    /**
+     *
+     */
+    public function isValidConditionCompare(DiscountConditionCompare $compare)
+    {
+        return $compare->isValid($this);
     }
     
     /**
@@ -182,6 +295,40 @@ class Item
     public function setId($id)
     {
         $this->_id = $id;
+        return $this;
+    }
+
+    /**
+     *
+     */
+    public function getSku()
+    {
+        return $this->_sku;
+    }
+
+    /**
+     *
+     */
+    public function setSku($sku)
+    {
+        $this->_sku = $sku;
+        return $this;
+    }
+
+    /**
+     *
+     */
+    public function getName()
+    {
+        return $this->_name;
+    }
+
+    /**
+     *
+     */
+    public function setName($name)
+    {
+        $this->_name = $name;
         return $this;
     }
 
@@ -261,6 +408,23 @@ class Item
     }
 
     /**
+     * Accessor
+     */
+    public function getCategoryIdsCsv()
+    {
+        return $this->_categoryIdsCsv;
+    }
+
+    /**
+     * Mutator
+     */
+    public function setCategoryIdsCsv($categoryIds)
+    {
+        $this->_categoryIdsCsv = $categoryIds;
+        return $this;
+    }
+
+    /**
      * Accessor for custom product variables
      *
      * @return array
@@ -277,7 +441,7 @@ class Item
      * @param string $value
      * @return $this
      */
-    public function addCustom($key, $value)
+    public function setCustom($key, $value)
     {
         $this->_custom[$key] = $value;
         return $this;
@@ -289,7 +453,7 @@ class Item
      * @param string $key
      * @return $this
      */
-    public function removeCustom($key)
+    public function unsetCustom($key)
     {
         if (isset($this->_custom[$key])) {
             unset($this->_custom[$key]);
@@ -297,9 +461,57 @@ class Item
         return $this;
     }
 
+    /**
+     *
+     */
     public function hasCustom($key)
     {
         return isset($this->_custom[$key]);
+    }
+
+    /**
+     * Accessor for product variables
+     *
+     * @return array
+     */
+    public function getVars()
+    {
+        return $this->_vars;
+    }
+    
+    /**
+     * Add product variable
+     *
+     * @param string $key
+     * @param string $value
+     * @return $this
+     */
+    public function setVar($key, $value)
+    {
+        $this->_vars[$key] = $value;
+        return $this;
+    }
+    
+    /**
+     * Remove product variable
+     *
+     * @param string $key
+     * @return $this
+     */
+    public function unsetVar($key)
+    {
+        if (isset($this->_vars[$key])) {
+            unset($this->_vars[$key]);
+        }
+        return $this;
+    }
+
+    /**
+     *
+     */
+    public function hasVar($key)
+    {
+        return isset($this->_vars[$key]);
     }
     
 }

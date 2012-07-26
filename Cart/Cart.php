@@ -1,19 +1,16 @@
 <?php
 
-/**
- * Basic Cart object
- * This object is intended to represent a common shopping cart.
- * A developer can load their own product, shipment, and discount objects, as needed, based on simple data contained here.
- * The state of the cart can be imported/exported as json, which allows for easy handling and storage of shopping carts.
- * 
- * Discounts are compared to "calculated ceiling values", 
- *  which means discounts will never amount to more than is discountable.
- *
- * (c) Jesse Hanson [jessehanson.com]
- */
-
 class Cart 
 {
+    /**
+     * @var int id The database row Id 
+     */
+    protected $_id;
+
+    /**
+     * @var Customer
+     */
+    protected $_customer;
 
     /**
      * @var array products
@@ -32,58 +29,76 @@ class Cart
 
     /**
      * Flag whether including tax in total 
+     *
+     * @var bool
      */
     protected $_includeTax; // enable/disable per state
 
     /**
      * Tax rate eg 0.08
+     *
+     * @var float
      */
-    protected $_taxRate;
+    protected $_taxRate; // per state / county
 
     /**
-     * Decimal point precision
+     * Decimal point precision, based on customer country
+     *
+     * @var int
      */
-    protected $_precision;
+    protected $_precision; // from config
+
+    /**
+     * Decimal point precision for Calculator
+     *  If a tax rate is .07025 , and a subtotal is 1000
+     *   70.25 should be charged for tax, not 70.00
+     *
+     * @var int
+     */
+    protected $_calculatorPrecision = 4; //from config
 
     /**
      * Flag whether to discount taxable subtotal first or last.
      *  This is only effective if the sum of pre-tax discounts "overlaps" 
      *  the sum of taxable items/shipments; which reduces the taxable subtotal,
-     *  and ultimately the amount of tax being billed, and paid for
+     *  and ultimately the amount of tax being paid for
      *
      * @var boolean
      */
-    protected $_discountTaxableLast;
-
-    //define array keys
+    protected $_discountTaxableLast; //from config
     
-    static $items = 'items'; //used as a prefix also, to keep keys formatted as strings
-    
-    static $discounts = 'discounts'; //includes gift certificates and coupons
-    
-    static $shipments = 'shipments';
-
-    static $includeTax = 'include_tax';
-    
-    static $tax = 'tax';
-
-    static $taxRate = 'tax_rate';
-
-    static $total = 'total';
-
-    static $discountTaxableLast = 'discount_taxable_last';
-    
-    public function __construct($precision = 2, $includeTax = false, $taxRate = 0, $discountTaxableLast = true)
+    public function __construct()
     {
-        $this->_items = array();
-        $this->_discounts = array();
-        $this->_shipments = array();
-        $this->_precision = $precision;
-        $this->_includeTax = $includeTax;
-        $this->_taxRate = $taxRate;
-        $this->_discountTaxableLast = $discountTaxableLast;
+        $this->reset();
     }
 
+    /**
+     * Retrieve calculator
+     */
+    public function getCalculator()
+    {
+        return new Calculator($this);
+    }
+
+    /**
+     * Get all totals from calculator
+     */
+    public function getTotals()
+    {
+        return $this->getCalculator()->getTotals();
+    }
+
+    /**
+     * Get all totals from calculator
+     */
+    public function getDiscountedTotals()
+    {
+        return $this->getCalculator()->getDiscountedTotals();
+    }
+
+    /**
+     *
+     */
     public function __toString()
     {
         return $this->toJson();
@@ -103,36 +118,59 @@ class Cart
      * Serialize object to array
      */
     public function toArray()
-    {        
-        $items = array();
-        if (count($this->_items) > 0) {
-            foreach($this->_items as $productKey => $product) {
-                $items[$productKey] = $product->toArray();
-            }
-        }
-        
+    {
+        return array(
+            'id'          => $this->getId(),
+            'customer'    => $this->getCustomer()->toArray(),
+            'items'       => $this->getItemsAsArray(),
+            'discounts'   => $this->getDiscountsAsArray(),
+            'shipments'   => $this->getShipmentsAsArray(),
+            'tax_rate'    => $this->getTaxRate(),
+            'include_tax' => $this->getIncludeTax(),
+            'discount_taxable_last' => $this->getDiscountTaxableLast(),
+        );
+    }
+
+    /**
+     *
+     */
+    public function getDiscountsAsArray()
+    {
         $discounts = array();
         if (count($this->_discounts) > 0) {
             foreach($this->_discounts as $discountKey => $discount) {
                 $discounts[$discountKey] = $discount->toArray();
             }
         }
+        return $discounts;
+    }
 
+    /**
+     *
+     */
+    public function getItemsAsArray()
+    {
+        $items = array();
+        if (count($this->_items) > 0) {
+            foreach($this->_items as $productKey => $product) {
+                $items[$productKey] = $product->toArray();
+            }
+        }
+        return $items;
+    }
+
+    /**
+     *
+     */
+    public function getShipmentsAsArray()
+    {
         $shipments = array();
         if (count($this->_shipments) > 0) {
             foreach($this->_shipments as $shipmentKey => $shipment) {
                 $shipments[$shipmentKey] = $shipment->toArray();
             }
         }
-        
-        return array(
-            self::$items      => $items,
-            self::$discounts  => $discounts,
-            self::$shipments  => $shipments,
-            self::$taxRate    => $this->getTaxRate(),
-            self::$includeTax => $this->getIncludeTax(),
-            self::$discountTaxableLast => $this->getDiscountTaxableLast(),
-        );
+        return $shipments;
     }
     
     /**
@@ -152,9 +190,22 @@ class Cart
         }
         
         $cart = @ (array) json_decode($json); // just gimme an array
+
+        if (isset($cart['id'])) {
+            $this->setId($cart['id']);
+        }
+
+        if (isset($cart['customer'])) {
+            $customerData = $cart['customer'];
+            $customer = new Customer();
+            if (is_array($customerData)) {
+                $customer->importJson(json_encode($customerData));
+                $this->setCustomer($customer);
+            }
+        }
         
-        if (isset($cart[self::$items]) && count($cart[self::$items]) > 0) {
-            $items = $cart[self::$items];
+        if (isset($cart['items']) && count($cart['items']) > 0) {
+            $items = $cart['items'];
             foreach($items as $productKey => $item) {
                 $itemJson = json_encode($item);
                 $item = new Item();
@@ -162,39 +213,47 @@ class Cart
                 $this->addItem($item);
             }
         }
-        
-        if (isset($cart[self::$discounts]) && count($cart[self::$discounts]) > 0) {
-            $discounts = $cart[self::$discounts];
-            foreach($discounts as $discountKey => $discount) {
-                $discountJson = json_encode($discount);
-                $discount = new Discount();
-                $discount->importJson($discountJson);
-                $this->addDiscount($discount);
-            }
-        }
 
-        if (isset($cart[self::$shipments]) && count($cart[self::$shipments]) > 0) {
-            $shipments = $cart[self::$shipments];
+        if (isset($cart['shipments']) && count($cart['shipments']) > 0) {
+            $shipments = $cart['shipments'];
             foreach($shipments as $shipmentKey => $shipment) {
-                $shipmentJson = json_encode($shipment);
-                $shipment = new Shipment();
-                $shipment->importJson($shipmentJson);
-                $this->addShipment($shipment);
+                $tmpShipment = new Shipment();
+                if ($shipment instanceof stdClass) {
+                    $tmpShipment->importStdClass($shipment);
+                    $this->addShipment($tmpShipment);
+                } else if (is_array($shipment)) {
+                    $tmpShipment->importJson(json_encode($shipment));
+                    $this->addShipment($tmpShipment);
+                }
+            }
+        }
+        
+        if (isset($cart['discounts']) && count($cart['discounts']) > 0) {
+            $discounts = $cart['discounts'];
+            foreach($discounts as $discountKey => $discount) {
+                $tmpDiscount = new Discount();
+                if ($discount instanceof stdClass) {
+                    $tmpDiscount->importStdClass($discount);
+                    $this->addDiscount($tmpDiscount);
+                } else if (is_array($tmpDiscount)) {
+                    $tmpDiscount->importJson(json_encode($discount));
+                    $this->addDiscount($tmpDiscount);
+                }
             }
         }
 
-        if (isset($cart[self::$includeTax])) {
-            $includeTax = $cart[self::$includeTax];
+        if (isset($cart['include_tax'])) {
+            $includeTax = $cart['include_tax'];
             $this->setIncludeTax($includeTax);
         }
 
-        if (isset($cart[self::$taxRate])) {
-            $taxRate = $cart[self::$taxRate];
+        if (isset($cart['tax_rate'])) {
+            $taxRate = $cart['tax_rate'];
             $this->setTaxRate($taxRate);
         }
 
-        if (isset($cart[self::$discountTaxableLast])) {
-            $discountTaxableLast = $cart[self::$discountTaxableLast];
+        if (isset($cart['discount_taxable_last'])) {
+            $discountTaxableLast = $cart['discount_taxable_last'];
             $this->setDiscountTaxableLast($discountTaxableLast);
         }
         
@@ -207,23 +266,50 @@ class Cart
      */
     public function reset()
     {
+        $this->_id = 0;
+        $this->_customer = new Customer();
         $this->_items = array();
         $this->_discounts = array();
         $this->_shipments = array();
         $this->_includeTax = false;
         $this->_taxRate = 0.0;
         $this->_precision = 2;
+        $this->_calculatorPrecision = 4;
         $this->_discountTaxableLast = true;
 
         return $this;
     }
 
     /**
-     * Decorator for float values
+     *
      */
-    public function currency($value)
+    public function isValidCondition(DiscountCondition $condition)
     {
-        return number_format($value, $this->_precision);
+        /*
+        Note: the Discount system isnt using this yet
+        */
+        switch($condition->getSourceField()) {
+            case 'total':
+                $condition->setSourceValue($this->getCalculator()->getTotal());
+                break;
+            case 'item_total':
+                $condition->setSourceValue($this->getCalculator()->getItemTotal());
+                break;
+            case 'shipment_total':
+                $condition->setSourceValue($this->getCalculator()->getShipmentTotal());
+                break;
+            case 'discounted_item_total':
+                $condition->setSourceValue($this->getCalculator()->getDiscountedItemTotal());
+                break;
+            case 'discounted_shipment_total':
+                $condition->setSourceValue($this->getCalculator()->getDiscountedShipmentTotal());
+                break;
+            default:
+                //no-op
+                break;
+        }
+
+        return $condition->isValid();
     }
 
     /**
@@ -244,135 +330,54 @@ class Cart
     }
 
     /**
-     * Get all totals
+     * Set decimal point precision
      */
-    public function getTotals()
+    public function setCalculatorPrecision($precision)
     {
-        return array(
-            self::$items     => $this->getItemTotal(),
-            self::$shipments => $this->getShipmentTotal(),
-            self::$discounts => $this->getDiscountTotal(),
-            self::$tax       => $this->getTaxTotal(),
-            self::$total     => $this->getTotal(),
-        );
+        $this->_calculatorPrecision = (int) $precision;
+        return $this;
     }
 
     /**
-     * Get Total
-     *
-     * This method is meant to be usable in a 'universal' way.
-     * I am not an accountant, so I'm not sure if this covers the most common calculations.
-     * Assumptions:
-     *  1. Shipments will never be added or calculated after tax is calculated. 
-     *  2. Products or Shipments may be taxable. 
-     *  3. Discounts may apply to either shipments or items; before or after tax
-     *  4. Percentage discounts are not compounded . This would require a relatively chaotic "weighting system"; add too much complexity
+     * Get decimal point precision
      */
-    public function getTotal()
+    public function getCalculatorPrecision()
     {
-        return $this->currency($this->getItemTotal() + 
-                                $this->getShipmentTotal() + 
-                                $this->getTaxTotal() - 
-                                $this->getDiscountTotal());
+        return $this->_calculatorPrecision;
     }
 
     /**
-     * Get Item Total
+     * Mutator
      */
-    public function getItemTotal()
+    public function setId($id)
     {
-        //always zero if empty
-        if (!count($this->getItems())) {
-            return $this->currency(0);
-        }
-        
-        $itemTotal = 0;
-        foreach($this->getItems() as $productKey => $item) {
-            $price = $this->currency($item->getPrice()); //TODO: abs()
-            $qty = $item->getQty();
-            $itemTotal += $this->currency($price * $qty);
-        }
-
-        return $this->currency($itemTotal);
+        $this->_id = $id;
+        return $this;
     }
 
     /**
-     * Get Shipping Total
+     * Accessor
      */
-    public function getShipmentTotal()
+    public function getId()
     {
-        if (!count($this->getShipments())) {
-            return $this->currency(0);
-        }
-
-        $total = 0;
-        foreach($this->getShipments() as $shipmentKey => $shipment) {
-            $total += $this->currency($shipment->getPrice());
-        }
-
-        return $this->currency($total);
+        return $this->_id;
     }
 
     /**
-     * Get Tax Total
+     * Mutator
      */
-    public function getTaxTotal()
+    public function setCustomer(Customer $customer)
     {
-        if (!$this->getIncludeTax()) {
-            return $this->currency(0);
-        }
-
-        $discountedItemTotal = 0;
-        $discountedShipmentTotal = 0;
-
-        if ($this->getDiscountTaxableLast()) {
-            //overlap = taxable + discountable - itemTotal;
-            //taxable -= overlap;
-
-            if (($this->getTaxableItemTotal() + $this->getPreTaxItemDiscount()) > $this->getItemTotal()) {
-                $itemOverlapAmount = $this->currency($this->getTaxableItemTotal() + $this->getPreTaxItemDiscount() - $this->getItemTotal());
-                $discountedItemTotal = $this->currency($this->getTaxableItemTotal() - $itemOverlapAmount);
-            } else {
-                $discountedItemTotal = $this->getTaxableItemTotal();
-            }
-
-            if (($this->getTaxableShipmentTotal() + $this->getPreTaxShipmentDiscount()) > $this->getShipmentTotal()) {
-                $shipmentOverlapAmount = $this->currency($this->getTaxableShipmentTotal() + $this->getPreTaxShipmentDiscount() - $this->getShipmentTotal());
-                $discountedShipmentTotal = $this->currency($this->getTaxableShipmentTotal() - $shipmentOverlapAmount);
-            } else {
-                $discountedShipmentTotal = $this->getTaxableShipmentTotal();
-            }
-
-        } else {
-
-            $discountedItemTotal = $this->getTaxableItemTotal() - $this->getPreTaxItemDiscount();
-            if ($discountedItemTotal <= 0) {
-                $discountedItemTotal = $this->currency(0);
-            }
-
-            $discountedShipmentTotal = $this->getTaxableShipmentTotal() - $this->getPreTaxShipmentDiscount();
-            if ($discountedShipmentTotal <= 0) {
-                $discountedShipmentTotal = $this->currency(0);
-            }
-        }
-
-        $taxableTotal = $this->currency($discountedItemTotal + $discountedShipmentTotal);
-
-        $totalTax = $this->currency($this->getTaxRate() * $taxableTotal);
-
-        return $this->currency($totalTax);
+        $this->_customer = $customer;
+        return $this;
     }
 
     /**
-     * Get Discount Total
-     *  Need to ensure that the sum of pre-tax discounts, and post-tax discounts
-     *  is not more than is discountable, for both Items and Shipments
+     * Accessor
      */
-    public function getDiscountTotal()
+    public function getCustomer()
     {
-        return $this->currency($this->getItemDiscountTotal() + 
-                               $this->getShipmentDiscountTotal() + 
-                               $this->getSpecifiedDiscountTotal());
+        return $this->_customer;
     }
 
     /**
@@ -422,6 +427,14 @@ class Cart
     }
 
     /**
+     *
+     */
+    public function hasItems()
+    {
+        return (count($this->getItems()) > 0);
+    }
+
+    /**
      * Assert Item exists
      *
      * @param string itemKey
@@ -434,8 +447,7 @@ class Cart
 
     /**
      * Get keys of shipments that have been specified in discounts
-     * This helps with separating specific discounts, so specified items
-     * are not discounted by non-specific discounts
+     * This helps with separating specific discounts
      *
      * @return array
      */
@@ -516,6 +528,14 @@ class Cart
     }
 
     /**
+     *
+     */
+    public function hasDiscounts()
+    {
+        return (count($this->getDiscounts()) > 0);
+    }
+
+    /**
      * Accessor
      */
     public function getShipments()
@@ -575,9 +595,15 @@ class Cart
     }
 
     /**
+     *
+     */
+    public function hasShipments()
+    {
+        return (count($this->getShipments()) > 0);
+    }
+
+    /**
      * Get keys of shipments that have been specified in discounts
-     * This helps with separating specific discounts, so specified items
-     * are not discounted by non-specific discounts
      *
      * @return array
      */
@@ -599,322 +625,6 @@ class Cart
             }
         }
         return $keys;
-    }
-
-    /**
-     * Get total discount of non-specified items.
-     * This method should be used to ensure the sum of pre-tax 
-     *  and post-tax discounts to Items, is not more than is discountable
-     */
-    public function getItemDiscountTotal()
-    {
-        $total = $this->currency($this->getPreTaxItemDiscount() + 
-                                 $this->getPostTaxItemDiscount());
-
-        if ($total > $this->getDiscountableItemTotal(true)) {
-            $total = $this->getDiscountableItemTotal(true);
-        }
-
-        return $total;
-    }
-
-    /**
-     * Get total discount of non-specified shipments.
-     * This method should be used to ensure the sum of pre-tax 
-     *  and post-tax discounts to Shipments, is not more than is discountable
-     */
-    public function getShipmentDiscountTotal()
-    {
-        $total = $this->currency($this->getPreTaxShipmentDiscount() + 
-                                 $this->getPostTaxShipmentDiscount());
-
-        // only shipments which are not already discounted, with specific-type Discounts
-        if ($total > $this->getDiscountableShipmentTotal(true)) {
-            $total = $this->getDiscountableShipmentTotal(true);
-        }
-
-        return $total;
-    }
-
-    /**
-     * Get total discount of specified Items and Shipments
-     *
-     */
-    public function getSpecifiedDiscountTotal()
-    {
-        $total = $this->currency($this->getPreTaxSpecifiedDiscount() + 
-                                 $this->getPostTaxSpecifiedDiscount());
-
-        //ensure sum of pre-tax and post-tax discount is not more than is discountable
-        if ($total > $this->getDiscountableSpecifiedTotal()) { 
-            $total =  $this->getDiscountableSpecifiedTotal(); 
-        }
-
-        return $total;
-    }
-
-    /**
-     * Get Total Item/Shipment/Specified Discount Before Tax
-     */
-    public function getPreTaxDiscount()
-    {
-        return $this->currency($this->getPreTaxShipmentDiscount() + 
-                               $this->getPreTaxItemDiscount() +
-                               $this->getPreTaxSpecifiedDiscount());
-    }
-
-    /**
-     * Get Total Shipment Discount Before Tax
-     *  By default, only non-specified and discountable items are included
-     */
-    public function getPreTaxShipmentDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPreTaxDiscounts()) > 0) {
-            foreach($this->getPreTaxDiscounts() as $discountKey => $discount) {
-
-                $value = $this->currency($discount->getValue());
-                $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
-
-                if ($discount->getTo() != Discount::$toShipments) {
-                    continue;
-                }
-
-                // need to get total of un-specified , and discountable
-                if ($as == Discount::$asPercent) {
-                    // only non-specified and discountable shipments
-                    $total += $this->currency($value * $this->getDiscountableShipmentTotal(true)); // only discountable shipments
-                } else {
-                    $total += $value;
-                }
-            }
-        }
-
-        // cannot be more than is discountable
-        if ($total > $this->getDiscountableShipmentTotal(true)) {
-            $total = $this->getDiscountableShipmentTotal(true);
-        }
-
-        return $this->currency($total);
-    }
-
-    /**
-     * Get Total Shipment Discount After Tax
-     *  By default, only non-specified and discountable items are included
-     * 
-     */
-    public function getPostTaxShipmentDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPostTaxDiscounts()) > 0) {
-            foreach($this->getPostTaxDiscounts() as $discountKey => $discount) {
-
-                $value = $this->currency($discount->getValue()); // either flat or percentage
-                $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
-
-                if ($discount->getTo() != Discount::$toShipments) {
-                    continue;
-                }
-
-                // need to get total of un-specified , and discountable
-                if ($as == Discount::$asPercent) {
-                    // only non-specified and discountable shipments
-                    $total += $this->currency($value * $this->getDiscountableShipmentTotal(true));
-                } else {
-                    $total += $value;
-                }
-            }
-        }
-
-        // cannot be more than is discountable
-        if ($total > $this->getDiscountableShipmentTotal(true)) {
-            $total = $this->getDiscountableShipmentTotal(true);
-        }
-
-        return $this->currency($total);
-    }
-
-    /**
-     * Get Item Discount Before Tax
-     *  By default, only non-specified and discountable items are included
-     */
-    public function getPreTaxItemDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPreTaxDiscounts()) > 0) {
-            foreach($this->getPreTaxDiscounts() as $discountKey => $discount) {
-
-                $value = $this->currency($discount->getValue()); // either flat or percentage
-                $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
-
-                if ($discount->getTo() != Discount::$toItems) {
-                    continue;
-                }
-
-                // need to get total of un-specified , and discountable
-                if ($as == Discount::$asPercent) {
-                    // only non-specified discountable items
-                    $total += $this->currency($value * $this->getDiscountableItemTotal(true));
-                } else {
-                    $total += $value;
-                }
-            }
-        }
-
-        // cannot be more than is discountable
-        if ($total > $this->getDiscountableItemTotal(true)) {
-            $total = $this->getDiscountableItemTotal(true);
-        }
-
-        return $this->currency($total);
-    }
-
-    /**
-     * Get Item Discount After Tax
-     *  By default, only non-specified and discountable items are included
-     * 
-     */
-    public function getPostTaxItemDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPostTaxDiscounts()) > 0) {
-            foreach($this->getPostTaxDiscounts() as $discountKey => $discount) {
-
-                $value = $this->currency($discount->getValue());
-                $as = ($discount->getAs() == Discount::$asFlat) ? Discount::$asFlat : Discount::$asPercent;
-
-                if ($discount->getTo() != Discount::$toItems) {
-                    continue;
-                }
-
-                // need to get total of un-specified , and discountable
-                if ($as == Discount::$asPercent) {
-                    // only non-specified discountable items
-                    $total += $this->currency($value * $this->getDiscountableItemTotal(true));
-                } else {
-                    $total += $value;
-                }
-            }
-        }
-
-        // cannot be more than is discountable
-        if ($total > $this->getDiscountableItemTotal(true)) {
-            $total = $this->getDiscountableItemTotal(true);
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get Total Specified Item/Shipment Discount before Tax
-     *  Items and Shipments included in specified-type Discounts
-     *   are not included in general Discounts
-     */
-    public function getPreTaxSpecifiedDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPreTaxDiscounts()) > 0) {
-            foreach($this->getPreTaxDiscounts() as $key => $discount) {
-
-                if ($discount->getTo() != Discount::$toSpecified) {
-                    continue;
-                }
-
-                $specifiedTotal = 0;
-
-                $discountItems = $discount->getItems();
-                if (count($discountItems) > 0) {
-                    foreach($discountItems as $key => $qty) {
-
-                        $item = $this->getItem($key);
-                        $price = $item->getPrice();
-
-                        // Item can over-ride Discount, but not the other way around
-                        if ($item->getIsDiscountable()) {
-                            if ($item->getQty() < $qty) {
-                                $qty = $item->getQty();
-                            }
-                            $specifiedTotal += $this->currency($price * $qty);
-                        }
-                    }
-                }
-
-                $discountShipments = $discount->getShipments();
-                if (count($discountShipments) > 0) {
-                    foreach($discountShipments as $key => $value) {
-
-                        //value and key are same
-                        $shipment = $this->getShipment($key);
-                        $price = $shipment->getPrice();
-
-                        if ($shipment->getIsDiscountable()) {
-                            $specifiedTotal += $this->currency($price);
-                        }
-                    }
-                }
-
-                //calculate discount
-                if ($discount->getAs() == Discount::$asFlat) {
-                    $total += $this->currency($discount->getValue());    
-                } else if ($discount->getAs() == Discount::$asPercent) {
-                    $total += $this->currency($discount->getValue() * $specifiedTotal);
-                }
-
-            }
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get Total Specified Item/Shipment Discount after Tax
-     */
-    public function getPostTaxSpecifiedDiscount()
-    {
-        $total = $this->currency(0);
-        if (count($this->getPostTaxDiscounts()) > 0) {
-            foreach($this->getPostTaxDiscounts() as $key => $discount) {
-
-                if ($discount->getTo() != Discount::$toSpecified) {
-                    continue;
-                }
-
-                $specifiedTotal = 0;
-
-                $discountItems = $discount->getItems();
-                if (count($discountItems) > 0) {
-                    foreach($discountItems as $key => $qty) {
-                        $item = $this->getItem($key);
-                        $price = $item->getPrice();
-                        if ($item->getIsDiscountable()) {
-                            if ($item->getQty() < $qty) {
-                                $qty = $item->getQty();
-                            }
-                            $specifiedTotal += $this->currency($price * $qty);
-                        }
-                    }
-                }
-
-                $discountShipments = $discount->getShipments();
-                if (count($discountShipments) > 0) {
-                    foreach($discountShipments as $key => $value) {
-                        //value and key are same
-                        $shipment = $this->getShipment($key);
-                        $price = $shipment->getPrice();
-                        if ($shipment->getIsDiscountable()) {
-                            $specifiedTotal += $this->currency($price);
-                        }
-                    }
-                }
-
-                //calculate discount
-                if ($discount->getAs() == Discount::$asFlat) {
-                    $total += $this->currency($discount->getValue());    
-                } else if ($discount->getAs() == Discount::$asPercent) {
-                    $total += $this->currency($discount->getValue() * $specifiedTotal);
-                }
-
-            }
-        }
-        return $this->currency($total);
     }
 
     /**
@@ -953,126 +663,6 @@ class Cart
             }
         }
         return $discounts;
-    }
-
-    /**
-     * Get discount total after tax
-     *  , by getting the sum of the 3 different types of discounts
-     *  By default, there is no overlap between Specified vs Item/Shipment
-     */
-    public function getPostTaxDiscount()
-    {
-        return $this->currency($this->getPostTaxItemDiscount() + 
-                               $this->getPostTaxShipmentDiscount() +
-                               $this->getPostTaxSpecifiedDiscount());
-    }
-
-    /**
-     * Get taxable shipment total
-     *  , by getting the sum of taxable shipments; regardless of type
-     */
-    public function getTaxableShipmentTotal()
-    {
-        $total = 0;
-        if (count($this->getShipments()) > 0) {
-            foreach($this->getShipments() as $shipmentKey => $shipment) {
-                if ($shipment->getIsTaxable()) {
-                    $total += $this->currency($shipment->getPrice());
-                }
-            }
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get discountable shipment total
-     *
-     * @param bool $unspecifiedOnly : Retrieve only shipments which are not already discounted
-     */
-    public function getDiscountableShipmentTotal($unspecifiedOnly = false)
-    {
-        $total = 0;
-        if (count($this->getShipments()) > 0) {
-
-            // Get references to discounted shipments
-            $specifiedShipmentKeys = $this->getSpecifiedDiscountShipmentKeys();
-
-            foreach($this->getShipments() as $shipmentKey => $shipment) {
-                if ($shipment->getIsDiscountable()) {
-                    if ($unspecifiedOnly && isset($specifiedShipmentKeys[$shipmentKey])) {
-                        continue;
-                    }
-
-                    if ($shipment->getIsDiscountable()) {
-                        $total += $this->currency($shipment->getPrice());
-                    }
-                }
-            }
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get discountable item total
-     *
-     * @param bool $unspecifiedOnly : Retrieve only shipments which are not already discounted
-     */
-    public function getDiscountableItemTotal($unspecifiedOnly = false)
-    {
-        $total = 0;
-        if (count($this->getItems()) > 0) {
-
-            // Get references to discounted items
-            $specifiedItemKeys = $this->getSpecifiedDiscountItemKeys();
-
-            foreach($this->getItems() as $itemKey => $item) {
-
-                if ($unspecifiedOnly && isset($specifiedItemKeys[$itemKey])) {
-                    continue;
-                }
-
-                if ($item->getIsDiscountable()) {
-                    $total += $this->currency($item->getPrice());
-                }
-            }
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get total that is discountable for specified items and shipments
-     *  , need to consider qty
-     */
-    public function getDiscountableSpecifiedTotal()
-    {   
-        return $this->currency($this->getDiscountableItemTotal() - 
-                               $this->getDiscountableItemTotal(true) + 
-                               $this->getDiscountableShipmentTotal() -
-                               $this->getDiscountableShipmentTotal(true));
-    }
-
-    /**
-     * Get taxable item total
-     */
-    public function getTaxableItemTotal()
-    {
-        $total = 0;
-        if (count($this->getItems()) > 0) {
-            foreach($this->getItems() as $productKey => $item) {
-                if ($item->getIsTaxable()) {
-                    $total += $this->currency($item->getPrice());
-                }
-            }
-        }
-        return $this->currency($total);
-    }
-
-    /**
-     * Get total of taxable items and shipments
-     */
-    public function getTaxableTotal()
-    {
-        return $this->currency($this->getTaxableItemTotal() + $this->getTaxableShipmentTotal());
     }
 
     /**

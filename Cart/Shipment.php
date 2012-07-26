@@ -1,14 +1,5 @@
 <?php
 
-/**
- * Basic Shipment object
- * This object represents a common shipment.
- * Currently, there is no logic around calculating the price.
- * All of the variables outside of the price are simply for storage of your own variables.
- * 
- * (c) Jesse Hanson [jessehanson.com]
- */
-
 class Shipment 
 {
 
@@ -52,37 +43,7 @@ class Shipment
 	 */
 	protected $_vendor;
 
-	// array keys for import/export
-
-	static $id = 'id'; // array key
-
-	static $items = 'items'; // array key
-
-	static $price = 'price'; // array key
-
-	static $isTaxable = 'is_taxable'; // array key
-
-	static $isDiscountable = 'is_discountable'; // array key
-
-	static $weight = 'weight'; // array key
-
-	static $method = 'method'; // array key
-
-	static $vendor = 'vendor'; // array key
-
 	static $prefix = 'shipment-'; // array key prefix
-
-	public function __construct($id = 0, $price = '0.00', $isTaxable = false, $isDiscountable = true, $weight = '', $method = '', $vendor = '')
-	{
-		$this->_id = $id;
-		$this->_vendor = $vendor;
-		$this->_method = $method;
-		$this->_weight = $weight;
-		$this->_price = $price;
-		$this->_isTaxable = $isTaxable;
-		$this->_isDiscountable = $isDiscountable;
-		$this->_items = array();
-	}
 
 	/**
 	 * Get key for associative arrays
@@ -90,6 +51,11 @@ class Shipment
 	static function getKey($id)
 	{
 		return self::$prefix . $id;
+	}
+
+	public function __construct()
+	{
+		$this->reset();
 	}
 
 	/**
@@ -114,14 +80,15 @@ class Shipment
 	public function toArray()
 	{
 		return array(
-			self::$id    		   => $this->getId(),
-			self::$price           => $this->getPrice(),
-			self::$isTaxable       => $this->getIsTaxable(),
-			self::$isDiscountable  => $this->getIsDiscountable(),
-			self::$weight          => $this->getWeight(),
-			self::$method          => $this->getMethod(),
-			self::$vendor          => $this->getVendor(),
-			self::$items    	   => $this->getItems(),
+			'id'    		  => $this->getId(),
+			'method'          => $this->getMethod(),
+			'vendor'          => $this->getVendor(),
+			'code'			  => $this->getCode(),
+			'price'           => $this->getPrice(),
+			'is_taxable'      => $this->getIsTaxable(),
+			'is_discountable' => $this->getIsDiscountable(),
+			'weight'          => $this->getWeight(),
+			'items'    	      => $this->getItems(),
 		);
 	}
 
@@ -136,14 +103,55 @@ class Shipment
 
 		$data = @ (array) json_decode($json);
 
-		$id = isset($data[self::$id]) ? $data[self::$id] : '';
-		$price = isset($data[self::$price]) ? $data[self::$price] : 0;
-		$isTaxable = isset($data[self::$isTaxable]) ? $data[self::$isTaxable] : false;
-		$isDiscountable = isset($data[self::$isDiscountable]) ? $data[self::$isDiscountable] : false;
-		$weight = isset($data[self::$weight]) ? $data[self::$weight] : 0;
-		$method = isset($data[self::$method]) ? $data[self::$method] : '';
-		$vendor = isset($data[self::$vendor]) ? $data[self::$vendor] : '';
-		$items = isset($data[self::$items]) ? $data[self::$items] : array();
+		$id = isset($data['id']) ? $data['id'] : '';
+		$price = isset($data['price']) ? $data['price'] : 0;
+		$isTaxable = isset($data['is_taxable']) ? $data['is_taxable'] : false;
+		$isDiscountable = isset($data['is_discountable']) ? $data['is_discountable'] : false;
+		$weight = isset($data['weight']) ? $data['weight'] : 0;
+		$method = isset($data['method']) ? $data['method'] : '';
+		$vendor = isset($data['vendor']) ? $data['vendor'] : '';
+
+		$items = isset($data['items']) ? $data['items'] : array();
+		if ((is_array($items) || $items instanceof stdClass) && count($items) > 0) {
+			$items = array();
+			foreach($items as $key => $qty) {
+				$items[$key] = $qty;
+			}
+		} else {
+			$items = array();
+		}
+
+		$this->_id = $id;
+		$this->_price = $price;
+		$this->_isTaxable = $isTaxable;
+		$this->_isDiscountable = $isDiscountable;
+		$this->_weight = $weight;
+		$this->_method = $method;
+		$this->_vendor = $vendor;
+		$this->_items = $items;
+
+		return $this;
+	}
+
+	/**
+	 *
+	 */
+	public function importStdClass($obj)
+	{
+		$id = isset($obj->id) ? $obj->id : '';
+		$price = (float) isset($obj->price) ? $obj->price : 0;
+		$weight = (float) isset($obj->weight) ? $obj->weight : 0;
+		$isTaxable = (bool) isset($obj->is_taxable) ? $obj->is_taxable : false;
+		$isDiscountable = (bool) isset($obj->is_discountable) ? $obj->is_discountable : false;
+		$vendor = isset($obj->vendor) ? $obj->vendor : '';
+		$method = isset($obj->method) ? $obj->method : '';
+
+		$items = array();
+		if (isset($obj->items) && count($obj->items) > 0) {
+			foreach($obj->items as $key => $qty) {
+				$items[$key] = $qty;
+			}
+		}
 
 		$this->_id = $id;
 		$this->_price = $price;
@@ -175,6 +183,29 @@ class Shipment
 	}
 
 	/**
+	 *
+	 */
+	public function isValidCondition(DiscountCondition $condition)
+	{
+		switch($condition->getSourceEntityField()) {
+			case 'code':
+				$condition->setSourceValue($this->getCode());
+				break;
+			case 'weight':
+				$condition->setSourceValue($this->getWeight());
+				break;
+			case 'price':
+				$condition->setSourceValue($this->getPrice());
+				break;
+			default:
+				//no-op
+				break;
+		}
+
+		return $condition->isValid();
+	}
+
+	/**
 	 * Accessor
 	 */
 	public function getId()
@@ -189,6 +220,14 @@ class Shipment
 	{
 		$this->_id = $id;
 		return $this;
+	}
+
+	/**
+	 *
+	 */
+	public function getCode()
+	{
+		return $this->getVendor() . '_' . $this->getMethod();
 	}
 
 	/**
@@ -307,7 +346,7 @@ class Shipment
 	public function addItem(Item $item)
 	{
 		$key = Item::getKey($item->getId());
-		$this->_items[$key] = $key;
+		$this->_items[$key] = $item->getQty();
 		return $this;
 	}
 
